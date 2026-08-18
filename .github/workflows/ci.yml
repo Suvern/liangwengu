@@ -27,14 +27,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Restore
-        run: dotnet restore -r win-x64
+      - name: Restore main project
+        run: dotnet restore src/Liangwengu/Liangwengu.fsproj -r win-x64
+
+      - name: Restore test project
+        run: dotnet restore tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -r win-x64
 
       - name: Build
-        run: dotnet build -c Release -r win-x64 --no-restore
+        run: dotnet build tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r win-x64 --no-restore
 
       - name: Test
-        run: dotnet test -c Release -r win-x64 --no-build --verbosity normal
+        run: dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r win-x64 --no-build --verbosity normal
 
       - name: Upload dev exe (PR preview)
         if: github.event_name == 'pull_request'

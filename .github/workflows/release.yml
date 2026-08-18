@@ -23,9 +23,10 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.fsproj', '**/*.props', '**/*.targets') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-      - run: dotnet restore -r win-x64
-      - run: dotnet build -c Release -r win-x64 --no-restore
-      - run: dotnet test -c Release -r win-x64 --no-build
+      - run: dotnet restore src/Liangwengu/Liangwengu.fsproj -r win-x64
+      - run: dotnet restore tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -r win-x64
+      - run: dotnet build tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r win-x64 --no-restore
+      - run: dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r win-x64 --no-build
 
   publish:
     needs: test
