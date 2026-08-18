@@ -86,11 +86,11 @@ let ``formatCountdown 格式化`` h m expected =
 
 [<Fact>]
 let ``statusLine 峰含表情与距谷`` () =
-    Assert.Equal("⛰️ 峰 · 距谷 1h23m", Domain.statusLine Peak (TimeSpan(1, 23, 0)))
+    Assert.Equal("😈 峰 · 距谷还有 1h23m", Domain.statusLine Peak (TimeSpan(1, 23, 0)))
 
 [<Fact>]
 let ``statusLine 谷含表情与距峰`` () =
-    Assert.Equal("🌾 谷 · 距峰 45m", Domain.statusLine OffPeak (TimeSpan(0, 45, 0)))
+    Assert.Equal("😊 谷 · 距峰还有 45m", Domain.statusLine OffPeak (TimeSpan(0, 45, 0)))
 
 [<Fact>]
 let ``inputLine 峰时输入价格`` () =

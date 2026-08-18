@@ -25,25 +25,26 @@ type App() =
         let valleyIcon = loadIcon "valley.png"
 
         // 状态行 + 每模型一行价格（禁用），加菜单项时与 Prices.all 顺序对应
-        let statusItem = NativeMenuItem(Header = "初始化…", IsEnabled = false)
+        let statusItem = NativeMenuItem(Header = "初始化…")
         let modelItems =
             Prices.all
-            |> List.map (fun _ -> NativeMenuItem(Header = "…", IsEnabled = false))
-        let exitItem = NativeMenuItem(Header = "退出")
+            |> List.map (fun _ -> NativeMenuItem(Header = "…"))
 
         let menu = NativeMenu()
         menu.Add statusItem
+        
         modelItems |> List.iter menu.Add
         menu.Add (NativeMenuItemSeparator())
-
-        // 开机启动开关: 状态用 Header 文字表达（规避 Windows IsChecked bug）
-        let autostartLabel enabled = if enabled then "开机启动: 开" else "开机启动: 关"
+        
+        // 开启启动Menu
+        let autostartLabel enabled = if enabled then "关闭开机启动" else "启用开机启动"
         let autostartItem = NativeMenuItem(Header = autostartLabel (Autostart.isEnabled ()))
         autostartItem.Click.Add(fun _ ->
             if Autostart.isEnabled () then Autostart.disable () else Autostart.enable ()
             autostartItem.Header <- autostartLabel (Autostart.isEnabled ()))
         menu.Add autostartItem
 
+        let exitItem = NativeMenuItem(Header = "退出")
         menu.Add exitItem
 
         let trayIcon = new TrayIcon()
@@ -57,10 +58,13 @@ type App() =
             let period = Domain.periodOf utc
             let _, switchAt = Domain.nextSwitch utc
             let remaining = switchAt - utc
+            
             trayIcon.ToolTipText <- Domain.tooltip period remaining Prices.all
             statusItem.Header <- Domain.statusLine period remaining
+            
             (modelItems, Prices.all)
-            ||> List.iter2 (fun item m -> item.Header <- Domain.inputLine period m)
+                ||> List.iter2 (fun item m -> item.Header <- Domain.inputLine period m)
+            
             if currentPeriod <> Some period then
                 trayIcon.Icon <- (match period with Peak -> peakIcon | OffPeak -> valleyIcon)
                 currentPeriod <- Some period
