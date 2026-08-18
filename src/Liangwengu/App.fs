@@ -1,6 +1,7 @@
 namespace Liangwengu
 
 open System
+open System.Diagnostics
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Controls.ApplicationLifetimes
@@ -24,11 +25,20 @@ type App() =
         let peakIcon = loadIcon "peak.png"
         let valleyIcon = loadIcon "valley.png"
 
-        // 状态行 + 每模型一行价格（禁用），加菜单项时与 Prices.all 顺序对应
+        // 状态行 + 每模型一行价格，点击跳转 DeepSeek 官方定价页
+        let openPricing _ =
+            Process.Start(ProcessStartInfo(
+                FileName = "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+                UseShellExecute = true)) |> ignore
+
         let statusItem = NativeMenuItem(Header = "初始化…")
+        statusItem.Click.Add openPricing
         let modelItems =
             Prices.all
-            |> List.map (fun _ -> NativeMenuItem(Header = "…"))
+            |> List.map (fun _ ->
+                let item = NativeMenuItem(Header = "…")
+                item.Click.Add openPricing
+                item)
 
         let menu = NativeMenu()
         menu.Add statusItem

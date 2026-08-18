@@ -49,21 +49,26 @@ module Domain =
         let h, m = total / 60, total % 60
         if h = 0 then $"%d{m}m" else $"%d{h}h%02d{m}m"
 
+    /// 倒计时段: "距谷还有 1h23m"
+    let private countdownPart (p: Period) (remaining: TimeSpan) : string =
+        let nextLabel = match p with Peak -> "谷" | OffPeak -> "峰"
+        $"距%s{nextLabel}还有 %s{formatCountdown remaining}"
+
     /// 状态行: "😈 峰 · 距谷还有 1h23m"
     let statusLine (p: Period) (remaining: TimeSpan) : string =
-        let nextLabel = match p with Peak -> "谷" | OffPeak -> "峰"
-        $"%s{periodEmoji p} %s{periodLabel p} · 距%s{nextLabel}还有 %s{formatCountdown remaining}"
+        $"%s{periodEmoji p} %s{periodLabel p} · %s{countdownPart p remaining}"
 
     /// 模型输入价格行: "Flash 输入 未命中¥3.00 命中¥0.10"
     let inputLine (p: Period) (m: ModelPrices) : string =
         let pr = pricesOf p m
         $"%s{m.DisplayName} 输入 未命中¥%s{fmtPrice pr.InputCacheMiss} 命中¥%s{fmtPrice pr.InputCacheHit}"
 
-    /// Tooltip 单行: "梁文谷 | 😈 峰 · 距谷还有 1h23m | Flash输出¥9.00 Pro输出¥27.00 /M"
+    /// Tooltip 单行: 梁文“峰”😈 |  距谷还有 1h23m | Flash输出¥9.00 Pro输出¥27.00 /M
+    /// 峰谷随时段切换名字玩梗（梁文峰/梁文谷）
     let tooltip (p: Period) (remaining: TimeSpan) (models: ModelPrices list) : string =
         let pricePart =
             models
             |> List.map (fun m -> $"%s{m.DisplayName}输出¥%s{fmtPrice (pricesOf p m).Output}")
             |> String.concat " "
 
-        $"梁文谷 | %s{statusLine p remaining} | %s{pricePart} /M"
+        $"梁文“%s{periodLabel p}”%s{periodEmoji p} |  %s{countdownPart p remaining} | %s{pricePart} /M"

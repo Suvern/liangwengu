@@ -98,8 +98,11 @@ let ``inputLine 峰时输入价格`` () =
     Assert.Equal("Flash 输入 未命中¥3.00 命中¥0.10", Domain.inputLine Peak flash)
 
 [<Fact>]
-let ``tooltip 含各模型输出价`` () =
+let ``tooltip 峰时完整格式`` () =
+    let s = Domain.tooltip Peak (TimeSpan(1, 23, 0)) Prices.all
+    Assert.Equal("梁文“峰”😈 |  距谷还有 1h23m | Flash输出¥9.00 Pro输出¥27.00 /M", s)
+
+[<Fact>]
+let ``tooltip 谷时完整格式`` () =
     let s = Domain.tooltip OffPeak (TimeSpan(14, 2, 0)) Prices.all
-    Assert.Contains("Flash输出¥4.50", s)
-    Assert.Contains("Pro输出¥13.50", s)
-    Assert.Contains("距峰", s)
+    Assert.Equal("梁文“谷”😊 |  距峰还有 14h02m | Flash输出¥4.50 Pro输出¥13.50 /M", s)
