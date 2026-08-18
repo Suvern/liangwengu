@@ -4,8 +4,8 @@ Windows 托盘挂件展示 DeepSeek 峰谷时段 + 价格
 
 托盘图标展示梁文峰/梁文谷
 
-> * 定价和峰谷数据来自 https://api-docs.deepseek.com/zh-cn/quick_start/pricing
-> * 图片来自 [Abyss-Seeker/liang-intensity-calibrator](https://github.com/Abyss-Seeker/liang-intensity-calibrator/tree/main) 的初始帧和结束帧
+* 定价和峰谷数据来自 https://api-docs.deepseek.com/zh-cn/quick_start/pricing
+* 图片来自 [Abyss-Seeker/liang-intensity-calibrator](https://github.com/Abyss-Seeker/liang-intensity-calibrator/tree/main) 的初始帧和结束帧
 
 ## Use
 TBD...
@@ -17,10 +17,17 @@ TBD...
 - [ ] 支持更多平台定价
 
 ## Develop
-Start
+需要前置安装 [.Net](https://dotnet.microsoft.com/zh-cn/download) 环境
 
+### 启动项目
 ```bash
 dotnet run --project ./src/Liangwengu
+```
+
+### 编译为x86-64 EXE
+| 产物位于：`src/Liangwengu/bin/Release/net8.0/win-x64/publish/liangwengu.exe`
+```bash
+dotnet publish src/Liangwengu/Liangwengu.fsproj -c Release -r win-x64
 ```
 
 ## License
