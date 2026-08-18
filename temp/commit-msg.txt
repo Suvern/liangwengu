@@ -1,6 +1,0 @@
-feat: meme tooltip, menu items open pricing docs
-
-- Tooltip: 梁文“峰”😈 / 梁文“谷”😊 switches with period, full-width quotes
-- Extract shared countdownPart; statusLine/tooltip reuse it
-- statusItem + modelItems now clickable, open DeepSeek pricing page
-- tooltip tests: exact-match assertions for peak and off-peak (26 green)
