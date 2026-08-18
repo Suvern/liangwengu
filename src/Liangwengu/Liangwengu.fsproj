@@ -6,6 +6,7 @@
     <AssemblyName>liangwengu</AssemblyName>
     <RootNamespace>Liangwengu</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -15,6 +16,7 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <PublishReadyToRun>true</PublishReadyToRun>
     <DebugType>embedded</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
