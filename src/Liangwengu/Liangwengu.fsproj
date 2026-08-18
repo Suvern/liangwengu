@@ -17,7 +17,6 @@
     <PublishReadyToRun>true</PublishReadyToRun>
     <DebugType>embedded</DebugType>
     <DebugSymbols>false</DebugSymbols>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>

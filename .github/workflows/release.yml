@@ -23,9 +23,9 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.fsproj', '**/*.props', '**/*.targets') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-      - run: dotnet restore
-      - run: dotnet build -c Release --no-restore
-      - run: dotnet test -c Release --no-build
+      - run: dotnet restore -r win-x64
+      - run: dotnet build -c Release -r win-x64 --no-restore
+      - run: dotnet test -c Release -r win-x64 --no-build
 
   publish:
     needs: test

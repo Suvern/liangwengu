@@ -28,13 +28,13 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore -r win-x64
 
       - name: Build
-        run: dotnet build -c Release --no-restore
+        run: dotnet build -c Release -r win-x64 --no-restore
 
       - name: Test
-        run: dotnet test -c Release --no-build --verbosity normal
+        run: dotnet test -c Release -r win-x64 --no-build --verbosity normal
 
       - name: Upload dev exe (PR preview)
         if: github.event_name == 'pull_request'
