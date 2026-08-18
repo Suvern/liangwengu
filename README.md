@@ -35,7 +35,7 @@
 - [ ] 支持更多平台定价
 
 ## Develop
-需要前置安装 [.Net](https://dotnet.microsoft.com/zh-cn/download) 环境
+需要前置安装 [.NET](https://dotnet.microsoft.com/zh-cn/download) 环境
 
 ### 启动项目
 ```bash
