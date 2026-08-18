@@ -64,7 +64,9 @@ type App() =
         let mutable currentPeriod: Period option = None
 
         let refresh () =
+            // let utc = DateTime(2026, 8, 20, 9, 1, 1, DateTimeKind.Local) // mock峰状态
             let utc = DateTime.UtcNow
+            
             let period = Domain.periodOf utc
             let _, switchAt = Domain.nextSwitch utc
             let remaining = switchAt - utc
