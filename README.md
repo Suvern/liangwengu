@@ -30,9 +30,10 @@
 
 ## TODO
 - [x] 开机启动
+- [ ] 从官网定价动态拉取数据而非写死
 - [ ] macOS 托盘支持
 - [ ] 峰谷跳变系统通知提醒
-- [ ] 支持更多平台定价
+- [ ] 支持更多平台峰谷定价
 
 ## Develop
 需要前置安装 [.NET](https://dotnet.microsoft.com/zh-cn/download) 环境

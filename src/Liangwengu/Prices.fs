@@ -18,7 +18,7 @@ type ModelPrices = {
 module Prices =
 
     // 数据来源: https://api-docs.deepseek.com/zh-cn/quick_start/pricing/
-    // 快照日期: 2026-08-18（调价时更新此表并发版，见 doc/PLAN.md 第 5 节）
+    // 快照日期: 2026-08-18
     let all: ModelPrices list = [
         { ModelId = "deepseek-v4-flash"; DisplayName = "Flash";
           Peak = { InputCacheHit = 0.10m; InputCacheMiss = 3.0m; Output = 9.0m };
