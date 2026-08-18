@@ -18,7 +18,7 @@ type App() =
         base.OnFrameworkInitializationCompleted()
 
         let loadIcon name =
-            let stream: IO.Stream = AssetLoader.Open(Uri(sprintf "avares://liangwengu/Assets/%s" name))
+            let stream: IO.Stream = AssetLoader.Open(Uri($"avares://liangwengu/Assets/{name}"))
             WindowIcon(stream)
 
         let peakIcon = loadIcon "peak.png"
@@ -34,6 +34,16 @@ type App() =
         let menu = NativeMenu()
         menu.Add statusItem
         modelItems |> List.iter menu.Add
+        menu.Add (NativeMenuItemSeparator())
+
+        // 开机启动开关: 状态用 Header 文字表达（规避 Windows IsChecked bug）
+        let autostartLabel enabled = if enabled then "开机启动: 开" else "开机启动: 关"
+        let autostartItem = NativeMenuItem(Header = autostartLabel (Autostart.isEnabled ()))
+        autostartItem.Click.Add(fun _ ->
+            if Autostart.isEnabled () then Autostart.disable () else Autostart.enable ()
+            autostartItem.Header <- autostartLabel (Autostart.isEnabled ()))
+        menu.Add autostartItem
+
         menu.Add exitItem
 
         let trayIcon = new TrayIcon()
@@ -43,10 +53,10 @@ type App() =
         let mutable currentPeriod: Period option = None
 
         let refresh () =
-            let bj = Domain.beijingTime DateTime.UtcNow
-            let period = Domain.periodOf bj
-            let _, switchAt = Domain.nextSwitch bj
-            let remaining = switchAt - bj
+            let utc = DateTime.UtcNow
+            let period = Domain.periodOf utc
+            let _, switchAt = Domain.nextSwitch utc
+            let remaining = switchAt - utc
             trayIcon.ToolTipText <- Domain.tooltip period remaining Prices.all
             statusItem.Header <- Domain.statusLine period remaining
             (modelItems, Prices.all)

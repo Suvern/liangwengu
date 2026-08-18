@@ -4,85 +4,73 @@ open System
 open Liangwengu
 open Xunit
 
-let bj (h: int) (m: int) : DateTime =
-    DateTime(2026, 8, 18, h, m, 0, DateTimeKind.Unspecified)
-
-// ------ beijingTime ------
-
-[<Fact>]
-let ``beijingTime 加 8 小时且跨日`` () =
-    let utc = DateTime(2026, 8, 18, 16, 0, 0, DateTimeKind.Utc)
-    let result = Domain.beijingTime utc
-    Assert.Equal(DateTime(2026, 8, 19, 0, 0, 0, DateTimeKind.Unspecified), result)
-
-[<Fact>]
-let ``beijingTime Kind 被清除`` () =
-    let utc = DateTime(2026, 8, 18, 1, 2, 3, DateTimeKind.Utc)
-    Assert.Equal(DateTimeKind.Unspecified, (Domain.beijingTime utc).Kind)
+// 官方英文版: Peak = 01:00-04:00 / 06:00-10:00 UTC，其余空闲
+let utc (h: int) (m: int) : DateTime =
+    DateTime(2026, 8, 18, h, m, 0, DateTimeKind.Utc)
 
 // ------ periodOf ------
 
 [<Theory>]
-[<InlineData(8, 59)>]   // 峰前 1 分钟
-[<InlineData(12, 0)>]   // 午间峰结束
-[<InlineData(13, 59)>]  // 午间空闲尾
-[<InlineData(18, 0)>]   // 傍晚峰结束
+[<InlineData(0, 59)>]   // 首峰前 1 分钟
+[<InlineData(4, 0)>]    // 晨峰结束
+[<InlineData(5, 59)>]   // 午间空闲尾
+[<InlineData(10, 0)>]   // 晚峰结束
 [<InlineData(23, 30)>]
 [<InlineData(0, 0)>]
 let ``periodOf 空闲时段`` h m =
-    Assert.Equal(OffPeak, Domain.periodOf (bj h m))
+    Assert.Equal(OffPeak, Domain.periodOf (utc h m))
 
 [<Theory>]
-[<InlineData(9, 0)>]    // 上午峰开始
-[<InlineData(11, 59)>]  // 上午峰尾
-[<InlineData(14, 0)>]   // 下午峰开始
-[<InlineData(17, 59)>]  // 下午峰尾
+[<InlineData(1, 0)>]    // 首峰开始
+[<InlineData(3, 59)>]   // 首峰尾
+[<InlineData(6, 0)>]    // 次峰开始
+[<InlineData(9, 59)>]   // 次峰尾
 let ``periodOf 高峰时段`` h m =
-    Assert.Equal(Peak, Domain.periodOf (bj h m))
+    Assert.Equal(Peak, Domain.periodOf (utc h m))
 
 // ------ nextSwitch ------
 
 [<Fact>]
-let ``nextSwitch 8:59 后 9:00 转峰`` () =
-    let p, t = Domain.nextSwitch (bj 8 59)
+let ``nextSwitch 0:59 后 1:00 转峰`` () =
+    let p, t = Domain.nextSwitch (utc 0 59)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 9, 0, 0), t)
+    Assert.Equal(DateTime(2026, 8, 18, 1, 0, 0), t)
 
 [<Fact>]
-let ``nextSwitch 9:00 后 12:00 转谷`` () =
-    let p, t = Domain.nextSwitch (bj 9 0)
+let ``nextSwitch 1:00 后 4:00 转谷`` () =
+    let p, t = Domain.nextSwitch (utc 1 0)
     Assert.Equal(OffPeak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 12, 0, 0), t)
+    Assert.Equal(DateTime(2026, 8, 18, 4, 0, 0), t)
 
 [<Fact>]
-let ``nextSwitch 11:59 后 12:00 转谷`` () =
-    let p, t = Domain.nextSwitch (bj 11 59)
+let ``nextSwitch 3:59 后 4:00 转谷`` () =
+    let p, t = Domain.nextSwitch (utc 3 59)
     Assert.Equal(OffPeak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 12, 0, 0), t)
+    Assert.Equal(DateTime(2026, 8, 18, 4, 0, 0), t)
 
 [<Fact>]
-let ``nextSwitch 12:00 后 14:00 转峰`` () =
-    let p, t = Domain.nextSwitch (bj 12 0)
+let ``nextSwitch 4:00 后 6:00 转峰`` () =
+    let p, t = Domain.nextSwitch (utc 4 0)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 14, 0, 0), t)
+    Assert.Equal(DateTime(2026, 8, 18, 6, 0, 0), t)
 
 [<Fact>]
-let ``nextSwitch 14:00 后 18:00 转谷`` () =
-    let p, t = Domain.nextSwitch (bj 14 0)
+let ``nextSwitch 6:00 后 10:00 转谷`` () =
+    let p, t = Domain.nextSwitch (utc 6 0)
     Assert.Equal(OffPeak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 18, 0, 0), t)
+    Assert.Equal(DateTime(2026, 8, 18, 10, 0, 0), t)
 
 [<Fact>]
-let ``nextSwitch 18:00 后次日 9:00 转峰`` () =
-    let p, t = Domain.nextSwitch (bj 18 0)
+let ``nextSwitch 10:00 后次日 1:00 转峰`` () =
+    let p, t = Domain.nextSwitch (utc 10 0)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 19, 9, 0, 0), t)
+    Assert.Equal(DateTime(2026, 8, 19, 1, 0, 0), t)
 
 [<Fact>]
-let ``nextSwitch 23:00 后次日 9:00 转峰`` () =
-    let p, t = Domain.nextSwitch (bj 23 0)
+let ``nextSwitch 23:00 后次日 1:00 转峰`` () =
+    let p, t = Domain.nextSwitch (utc 23 0)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 19, 9, 0, 0), t)
+    Assert.Equal(DateTime(2026, 8, 19, 1, 0, 0), t)
 
 // ------ formatCountdown ------
 
