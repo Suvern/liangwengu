@@ -1,19 +1,62 @@
 {
   "schemaVersion": 1,
-  "sourceHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "sourceHash": "sha256:3b2d26ad11d876ebac9d60513a861db6c6560e01b6662524b551ab97a9067463",
   "currency": "CNY",
   "peakPolicy": {
-    "weekdaysOnly": false,
+    "weekdaysOnly": true,
     "windows": [
-      { "start": "00:00", "end": "01:00" }
+      {
+        "start": "01:00",
+        "end": "04:00"
+      },
+      {
+        "start": "06:00",
+        "end": "10:00"
+      }
     ]
   },
   "models": [
     {
-      "modelId": "test-placeholder",
-      "displayName": "Test",
-      "peak": { "inputCacheHit": 0, "inputCacheMiss": 0, "output": 0 },
-      "offPeak": { "inputCacheHit": 0, "inputCacheMiss": 0, "output": 0 }
+      "modelId": "deepseek-v4-flash",
+      "displayName": "Flash",
+      "peak": {
+        "inputCacheHit": 0.1,
+        "inputCacheMiss": 3,
+        "output": 9
+      },
+      "offPeak": {
+        "inputCacheHit": 0.05,
+        "inputCacheMiss": 1.5,
+        "output": 4.5
+      }
+    },
+    {
+      "modelId": "deepseek-v4-pro",
+      "displayName": "Pro",
+      "peak": {
+        "inputCacheHit": 0.3,
+        "inputCacheMiss": 9,
+        "output": 27
+      },
+      "offPeak": {
+        "inputCacheHit": 0.15,
+        "inputCacheMiss": 4.5,
+        "output": 13.5
+      }
+    },
+    {
+      "modelId": "deepseek-v4-flash-vision-exp",
+      "displayName": "Flash Vision",
+      "peak": {
+        "inputCacheHit": 0.1,
+        "inputCacheMiss": 3,
+        "output": 9
+      },
+      "offPeak": {
+        "inputCacheHit": 0.05,
+        "inputCacheMiss": 1.5,
+        "output": 4.5
+      }
     }
   ]
 }
