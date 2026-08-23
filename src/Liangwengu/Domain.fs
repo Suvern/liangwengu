@@ -9,28 +9,45 @@ type Period =
 
 module Domain =
 
-    // 官方英文版定价页直接以 UTC 表述峰谷:
-    //   Peak hours are 01:00-04:00 and 06:00-10:00 UTC (all other hours are off-peak)
-    //   （等价于中文版的北京时间 9:00-12:00 / 14:00-18:00，两者 -8h 关系）
-    // 因此全部以 UTC 计算，无需任何时区转换。
+    // 峰谷策略来自 PricingSnapshot.PeakPolicy（运行时由拉取/bundled 提供）。
+    // timezone 固定 UTC：官方英文版直接以 UTC 表述，DateTime.UtcNow 直读，零时区转换。
 
-    /// UTC 时间 -> 当前计费时段
-    let periodOf (utc: DateTime) : Period =
-        let minutes = utc.Hour * 60 + utc.Minute
-        let isPeak = (minutes >= 60 && minutes < 240) || (minutes >= 360 && minutes < 600)
-        if isPeak then Peak else OffPeak
+    /// UTC 时间 + 峰谷策略 -> 当前计费时段
+    /// weekdaysOnly=true 时，周六日整天为 OffPeak。
+    let periodOf (policy: PeakPolicy) (utc: DateTime) : Period =
+        if policy.WeekdaysOnly && (utc.DayOfWeek = DayOfWeek.Saturday || utc.DayOfWeek = DayOfWeek.Sunday) then
+            OffPeak
+        else
+            let mins = utc.Hour * 60 + utc.Minute
+            policy.Windows
+            |> List.exists (fun w -> mins >= PricingSchema.parseHHmm w.Start && mins < PricingSchema.parseHHmm w.End)
+            |> function true -> Peak | false -> OffPeak
 
-    /// UTC 时间 -> 下一次切换的时刻（UTC）与切换后的时段
-    let nextSwitch (utc: DateTime) : Period * DateTime =
-        let date = utc.Date
-        let boundaries =
-            [ (date.AddHours 1.0, Peak)
-              (date.AddHours 4.0, OffPeak)
-              (date.AddHours 6.0, Peak)
-              (date.AddHours 10.0, OffPeak) ]
-        match boundaries |> List.tryFind (fun (t, _) -> t > utc) with
-        | Some (t, p) -> p, t
-        | None -> Peak, (date.AddDays 1.0).AddHours 1.0
+    /// UTC 时间 + 峰谷策略 -> 下一次切换的时刻（UTC）与切换后的时段
+    /// weekdaysOnly=true 时，周五 10:00 后的下一个切换是周一 01:00（跳过整个周末）。
+    let nextSwitch (policy: PeakPolicy) (utc: DateTime) : Period * DateTime =
+        let isWeekday (d: DateTime) =
+            not policy.WeekdaysOnly
+            || (d.DayOfWeek <> DayOfWeek.Saturday && d.DayOfWeek <> DayOfWeek.Sunday)
+
+        // 给定一个日期（0:00），按 windows 生成当日所有边界（升序），过滤出 > utc 的第一个
+        let firstBoundaryAfter (date: DateTime) =
+            policy.Windows
+            |> List.collect (fun w ->
+                [ date.AddMinutes(float (PricingSchema.parseHHmm w.Start)), Peak
+                  date.AddMinutes(float (PricingSchema.parseHHmm w.End)), OffPeak ])
+            |> List.sortBy fst
+            |> List.tryFind (fun (t, _) -> t > utc)
+
+        let rec loop (date: DateTime) =
+            if isWeekday date then
+                match firstBoundaryAfter date with
+                | Some (t, p) -> p, t
+                | None -> loop (date.AddDays 1.0)
+            else
+                loop (date.AddDays 1.0)
+
+        loop utc.Date
 
     let periodEmoji (p: Period) =
         match p with Peak -> "😈" | OffPeak -> "😊"
@@ -63,7 +80,7 @@ module Domain =
         let pr = pricesOf p m
         $"%s{m.DisplayName} 输入 未命中¥%s{fmtPrice pr.InputCacheMiss} 命中¥%s{fmtPrice pr.InputCacheHit}"
 
-    /// Tooltip 单行: 梁文“峰”😈 |  距谷还有 1h23m | Flash输出¥9.00 Pro输出¥27.00 /M
+    /// Tooltip 单行: 梁文"峰"😈 |  距谷还有 1h23m | Flash输出¥9.00 Pro输出¥27.00 /M
     /// 峰谷随时段切换名字玩梗（梁文峰/梁文谷）
     let tooltip (p: Period) (remaining: TimeSpan) (models: ModelPrices list) : string =
         let pricePart =
@@ -71,4 +88,4 @@ module Domain =
             |> List.map (fun m -> $"%s{m.DisplayName}输出¥%s{fmtPrice (pricesOf p m).Output}")
             |> String.concat " "
 
-        $"梁文“%s{periodLabel p}”%s{periodEmoji p} |  %s{countdownPart p remaining} | %s{pricePart} /M"
+        $"梁文\u201C{periodLabel p}\u201D{periodEmoji p} |  {countdownPart p remaining} | {pricePart} /M"

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
     <AssemblyName>liangwengu</AssemblyName>
     <RootNamespace>Liangwengu</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -20,7 +20,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Prices.fs" />
+    <Compile Include="PricingSchema.fs" />
+    <Compile Include="PricingFetcher.fs" />
+    <Compile Include="PricingService.fs" />
     <Compile Include="Domain.fs" />
     <Compile Include="Autostart.fs" />
     <Compile Include="App.fs" />
@@ -34,10 +36,13 @@
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.*" />
     <!-- M4 自定义面板(MVU)前基本不用，按既定决策保留引用 -->
     <PackageReference Include="Avalonia.FuncUI" Version="2.0.0" />
+    <PackageReference Include="FSharp.SystemTextJson" Version="1.4.36" />
   </ItemGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <!-- pricing.json 既是远程托管源也是编译期内嵌兜底，单一来源 -->
+    <EmbeddedResource Include="..\..\pricing.json" LogicalName="liangwengu.pricing.json" />
   </ItemGroup>
 
 </Project>
