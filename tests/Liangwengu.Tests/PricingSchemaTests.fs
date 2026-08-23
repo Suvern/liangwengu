@@ -57,7 +57,12 @@ let ``parse 不支持的 schemaVersion 返回 Error`` () =
 
 [<Fact>]
 let ``parse 缺少 schemaVersion 返回 Error`` () =
-    let json = validV1.Replace("\"schemaVersion\": 1,\n  ", "")
+    let json = """{
+  "sourceHash": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+  "currency": "CNY",
+  "peakPolicy": { "weekdaysOnly": true, "windows": [{ "start": "01:00", "end": "04:00" }] },
+  "models": [{ "modelId": "a", "displayName": "A", "peak": { "inputCacheHit": 1, "inputCacheMiss": 2, "output": 3 }, "offPeak": { "inputCacheHit": 0.5, "inputCacheMiss": 1, "output": 1.5 } }]
+}"""
     assertError (PricingSchema.parse json)
 
 [<Fact>]

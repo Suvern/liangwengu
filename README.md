@@ -30,7 +30,7 @@
 
 ## TODO
 - [x] 开机启动
-- [ ] 从官网定价动态拉取数据而非写死
+- [x] 从官网定价动态拉取数据而非写死
 - [ ] macOS 托盘支持
 - [ ] 峰谷跳变系统通知提醒
 - [ ] 支持更多平台峰谷定价
@@ -44,7 +44,7 @@ dotnet run --project ./src/Liangwengu
 ```
 
 ### 编译为x86-64 EXE
-| 产物位于：`src/Liangwengu/bin/Release/net8.0/win-x64/publish/liangwengu.exe`
+| 产物位于：`src/Liangwengu/bin/Release/net8.0-windows10.0.17763.0/win-x64/publish/liangwengu.exe`
 ```bash
 dotnet publish src/Liangwengu/Liangwengu.fsproj -c Release -r win-x64
 ```
