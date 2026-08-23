@@ -485,3 +485,7 @@ $RECYCLE.BIN/
 
 # temp scratch files
 temp/
+
+# Local scratch output
+out.txt
+err.txt

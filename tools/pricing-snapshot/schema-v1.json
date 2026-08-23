@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Liangwengu Pricing Snapshot v1",
+  "description": "DeepSeek 峰谷定价快照。timezone 固定 UTC（不在 schema 中出现，程序内写死）。",
+  "type": "object",
+  "required": ["schemaVersion", "sourceHash", "currency", "peakPolicy", "models"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "schema 版本号。程序仅在 SUPPORTED_SCHEMA_VERSIONS 集合内时才解析。v1 阶段固定为 1。"
+    },
+    "sourceHash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "由脚本注入（非 LLM 生成）。对 HTML 价格区域规范化文本算 sha256，用于缓存对比。"
+    },
+    "currency": {
+      "type": "string",
+      "enum": ["CNY", "USD"],
+      "description": "币种。中文版 HTML → CNY；英文版 HTML → USD。根据 HTML 实际标注的币种输出，不做换算。"
+    },
+    "peakPolicy": {
+      "type": "object",
+      "required": ["weekdaysOnly", "windows"],
+      "additionalProperties": false,
+      "properties": {
+        "weekdaysOnly": {
+          "type": "boolean",
+          "description": "true = 仅周一至周五有峰时，周末全天空闲；false = 每天都有峰谷。"
+        },
+        "windows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["start", "end"],
+            "additionalProperties": false,
+            "properties": {
+              "start": { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
+              "end":   { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+            }
+          }
+        }
+      }
+    },
+    "models": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["modelId", "displayName", "peak", "offPeak"],
+        "additionalProperties": false,
+        "properties": {
+          "modelId": { "type": "string", "minLength": 1 },
+          "displayName": { "type": "string", "minLength": 1 },
+          "peak":    { "$ref": "#/$defs/periodPrices" },
+          "offPeak": { "$ref": "#/$defs/periodPrices" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "periodPrices": {
+      "type": "object",
+      "required": ["inputCacheHit", "inputCacheMiss", "output"],
+      "additionalProperties": false,
+      "properties": {
+        "inputCacheHit":  { "type": "number", "minimum": 0 },
+        "inputCacheMiss": { "type": "number", "minimum": 0 },
+        "output":         { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

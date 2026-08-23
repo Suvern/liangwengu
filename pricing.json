@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "sourceHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "currency": "CNY",
+  "peakPolicy": {
+    "weekdaysOnly": false,
+    "windows": [
+      { "start": "00:00", "end": "01:00" }
+    ]
+  },
+  "models": [
+    {
+      "modelId": "test-placeholder",
+      "displayName": "Test",
+      "peak": { "inputCacheHit": 0, "inputCacheMiss": 0, "output": 0 },
+      "offPeak": { "inputCacheHit": 0, "inputCacheMiss": 0, "output": 0 }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "liangwengu-pricing-snapshot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Out-of-band pipeline: fetch DeepSeek pricing HTML, parse with LLM, validate, diff, and update dist/pricing.json",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "fetch": "tsx src/fetch-html.ts",
+    "parse": "tsx src/parse-with-llm.ts",
+    "validate": "tsx src/validate.ts",
+    "sync": "tsx src/sync.ts"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

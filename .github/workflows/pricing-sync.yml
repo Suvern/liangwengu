@@ -1,0 +1,83 @@
+name: pricing-sync
+
+on:
+  push:
+    paths:
+      - '.github/workflows/pricing-sync.yml'
+  schedule:
+    - cron: '5 0 * * *'  # 每天 00:05 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/pricing-snapshot
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm install --no-audit --no-fund
+
+      - name: Run sync
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: npx tsx src/sync.ts > /tmp/result.json 2>> "$GITHUB_STEP_SUMMARY"
+
+      - name: Read result
+        id: r
+        run: |
+          {
+            echo "hashChanged=$(jq -r .hashChanged /tmp/result.json)"
+            echo "dataChanged=$(jq -r .dataChanged /tmp/result.json)"
+            echo "bumpNeeded=$(jq -r .bumpNeeded /tmp/result.json)"
+            echo "bumpReason=$(jq -r .bumpReason /tmp/result.json)"
+          } >> "$GITHUB_OUTPUT"
+
+      # 数据变更或需要 schema 升级 → 提 PR（人审）
+      - name: Create PR — schema bump
+        if: steps.r.outputs.bumpNeeded == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'feat(pricing): schema bump needed'
+          title: 'pricing: schema bump needed (v1 → v2?)'
+          body: |
+            LLM 检测到当前 v1 schema 无法表达定价页的变化：
+
+            > ${{ steps.r.outputs.bumpReason }}
+
+            请人工确认后升级 schema 并发版。
+          branch: pricing-sync
+          add-paths: pricing.json
+          labels: schema-bump
+
+      - name: Create PR — data update
+        if: steps.r.outputs.dataChanged == 'true' && steps.r.outputs.bumpNeeded != 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore(pricing): update pricing snapshot'
+          title: 'pricing: 定价数据更新'
+          body: |
+            DeepSeek 定价页内容变化，已用 LLM 重新解析。
+            请审核 JSON 变更后合并。
+          branch: pricing-sync
+          add-paths: pricing.json
+          labels: pricing-data
+
+      # 仅 sourceHash 变（HTML 变了但提取数据没变）→ 直接 push
+      - name: Auto-commit metadata-only change
+        if: steps.r.outputs.hashChanged == 'true' && steps.r.outputs.dataChanged != 'true' && steps.r.outputs.bumpNeeded != 'true'
+        run: |
+          git config user.name  github-actions[bot]
+          git config user.email github-actions@noreply
+          git add pricing.json
+          git commit -m "chore(pricing): metadata-only refresh (sourceHash changed, data unchanged)" || exit 0
+          git push
