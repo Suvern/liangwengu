@@ -21,12 +21,14 @@
 | 空闲时段   | 😊“梁文谷”  | ![](docs/assets/valley.png) |
 
 * 定价和峰谷数据来自 https://api-docs.deepseek.com/zh-cn/quick_start/pricing
+  * 通过 LLM 解析官网 HTML 生成 `pricing.json`，程序每 30 min 从 GitHub 拉取最新版本，离线时使用编译期内嵌的兜底数据
 * 图片来自 [Abyss-Seeker/liang-intensity-calibrator](https://github.com/Abyss-Seeker/liang-intensity-calibrator/tree/main) 的初始帧和结束帧
 
 ## Feature
-* 系统托盘根据峰/谷状态自动切换图标“梁文峰”/“梁文谷”（一念神魔）
+* 系统托盘根据峰/谷状态自动切换图标"梁文峰"/"梁文谷"（一念神魔）
 * 鼠标 hover 托盘图标展示当前峰谷状态 + 价格
 * 右键托盘图标查看详细状态、设置开机启动
+* 定价数据动态拉取：LLM 解析官网 → GitHub 托管 JSON → 程序每 30 min 自动更新，离线用 bundled 兜底
 
 ## TODO
 - [x] 开机启动
