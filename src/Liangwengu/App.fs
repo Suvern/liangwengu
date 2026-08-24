@@ -18,6 +18,13 @@ type App() =
     override this.OnFrameworkInitializationCompleted() =
         base.OnFrameworkInitializationCompleted()
 
+        match this.ApplicationLifetime with
+        | :? IClassicDesktopStyleApplicationLifetime as desktop ->
+            Console.CancelKeyPress.Add(fun e ->
+                e.Cancel <- true
+                desktop.Shutdown())
+        | _ -> ()
+
         let loadIcon name =
             let stream: IO.Stream = AssetLoader.Open(Uri($"avares://liangwengu/Assets/{name}"))
             WindowIcon(stream)
