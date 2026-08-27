@@ -2,7 +2,7 @@
 
 这是一个 **实时展示 DeepSeek 峰谷价格的系统托盘小程序**，用于随时查看峰谷情况
 
-全部使用 `F#` + `Avalonia.FuncUI` 进行开发，目前仅支持 Windows（未来会支持 macOS）
+全部使用 `F#` + `Avalonia.FuncUI` 进行开发，支持 Windows 和 macOS
 
 **效果展示**
 
@@ -33,22 +33,55 @@
 ## TODO
 - [x] 开机启动
 - [x] 从官网定价动态拉取数据而非写死
-- [ ] macOS 托盘支持
+- [x] macOS 托盘支持
 - [ ] 峰谷跳变系统通知提醒
 - [ ] 支持更多平台峰谷定价
 
 ## Develop
-需要前置安装 [.NET](https://dotnet.microsoft.com/zh-cn/download) 环境
+需要前置安装 [.NET 10](https://dotnet.microsoft.com/zh-cn/download) 环境
 
 ### 启动项目
+
+**macOS:**
 ```bash
-dotnet run --project ./src/Liangwengu
+dotnet run --project ./src/Liangwengu -f net10.0
 ```
 
-### 编译为x86-64 EXE
-| 产物位于：`src/Liangwengu/bin/Release/net8.0-windows10.0.17763.0/win-x64/publish/liangwengu.exe`
+**Windows:**
 ```bash
-dotnet publish src/Liangwengu/Liangwengu.fsproj -c Release -r win-x64
+dotnet run --project ./src/Liangwengu -f net10.0-windows10.0.17763.0
+```
+
+### 发布
+
+**macOS (ARM64):**
+```bash
+./scripts/build-mac.sh arm64
+# 产物位于: artifacts/macos-arm64/liangwengu
+```
+
+**macOS (x64):**
+```bash
+./scripts/build-mac.sh x64
+# 产物位于: artifacts/macos-x64/liangwengu
+```
+
+**Windows (x64):**
+```powershell
+.\scripts\build-win.ps1 x64
+# 产物位于: artifacts\windows-x64\liangwengu.exe
+```
+
+### 手动发布命令
+
+**macOS:**
+```bash
+dotnet publish src/Liangwengu/Liangwengu.fsproj -c Release -f net10.0 -r osx-arm64 --self-contained true -o artifacts/macos-arm64
+```
+
+**Windows:**
+```bash
+dotnet publish src/Liangwengu/Liangwengu.fsproj -c Release -f net10.0-windows10.0.17763.0 -r win-x64 --self-contained true -o artifacts/windows-x64
 ```
 
 ## License
