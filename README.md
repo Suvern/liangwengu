@@ -57,14 +57,14 @@ dotnet run --project ./src/Liangwengu -f net10.0-windows10.0.17763.0
 
 **macOS (ARM64):**
 ```bash
-./scripts/build-mac.sh arm64
-# 产物位于: artifacts/macos-arm64/liangwengu
+./scripts/build-mac.sh arm64 0.1.0
+# 产物: artifacts/macos-arm64/liangwengu-0.1.0-macos-arm64.dmg
 ```
 
 **macOS (x64):**
 ```bash
-./scripts/build-mac.sh x64
-# 产物位于: artifacts/macos-x64/liangwengu
+./scripts/build-mac.sh x64 0.1.0
+# 产物: artifacts/macos-x64/liangwengu-0.1.0-macos-x64.dmg
 ```
 
 **Windows (x64):**
@@ -77,7 +77,7 @@ dotnet run --project ./src/Liangwengu -f net10.0-windows10.0.17763.0
 
 **macOS:**
 ```bash
-dotnet publish src/Liangwengu/Liangwengu.fsproj -c Release -f net10.0 -r osx-arm64 --self-contained true -o artifacts/macos-arm64
+./scripts/build-mac.sh arm64 0.1.0
 ```
 
 **Windows:**

@@ -5,6 +5,7 @@
 ## Unreleased
 
 ### Added
+- macOS 生成带应用图标的 `.app` 和 `.dmg` 安装包，Release 分别构建 ARM64 与 x64
 - 定价数据动态拉取：LLM 解析 DeepSeek 官网 HTML 生成 `pricing.json`，程序每 30 min 从 GitHub 拉取，离线用编译期内嵌的 bundled 数据兜底
 - out-of-band 生成管线（`tools/pricing-snapshot/`）：TypeScript + tsx 脚本，cheerio 提取价格区域算 sha256，DeepSeek API（json mode）解析，ajv 校验
 - `pricing-sync.yml` GitHub Actions workflow：每日 00:05 UTC 定时执行，HTML hash 不变跳过 LLM，数据变更提 PR，仅 hash 变更直接 push

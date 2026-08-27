@@ -14,13 +14,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
         include:
           - os: windows-latest
             rid: win-x64
             framework: net10.0-windows10.0.17763.0
-          - os: macos-latest
+          - os: macos-14
             rid: osx-arm64
+            framework: net10.0
+          - os: macos-13
+            rid: osx-x64
             framework: net10.0
     steps:
       - uses: actions/checkout@v4
