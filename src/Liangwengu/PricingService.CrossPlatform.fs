@@ -1,27 +1,24 @@
 namespace Liangwengu
 
 open System
-open System.Net.NetworkInformation
 open Avalonia.Threading
-open Windows.Data.Xml.Dom
-open Windows.UI.Notifications
 
 module PricingService =
 
+    let private consecutiveFailures = ref 0
+
     let notify (title: string) (msg: string) =
-        try
-            let xml = XmlDocument()
-            xml.LoadXml(
-                "<toast><visual><binding template=\"ToastText02\">"
-                + $"<text id=\"1\">{title}</text><text id=\"2\">{msg}</text>"
-                + "</binding></visual></toast>")
-            let toast = ToastNotification(xml)
-            ToastNotificationManager.CreateToastNotifier("liangwengu").Show(toast)
-        with _ -> ()
+#if WIN32
+        try Windows.Notify.show title msg with _ -> ()
+#else
+        if OperatingSystem.IsMacOS() then
+            // macOS: 暂时用 log 输出，后续可添加原生通知方案
+            printfn "[Notification] %s: %s" title msg
+        else
+            failwith "Linux notification is not implemented"
+#endif
 
     let start (onUpdate: PricingSnapshot -> unit) : unit =
-        let consecutiveFailures = ref 0
-
         let fetch () =
             async {
                 let! remote = PricingFetcher.tryFetchRemote ()
@@ -32,7 +29,7 @@ module PricingService =
                         PricingFetcher.saveLocalCache snap
                         onUpdate snap)
                 | None ->
-                    if NetworkInterface.GetIsNetworkAvailable () then
+                    if System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable () then
                         incr consecutiveFailures
                         if consecutiveFailures.Value >= 3 then
                             consecutiveFailures.Value <- 0

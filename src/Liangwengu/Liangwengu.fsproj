@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net10.0;net10.0-windows10.0.17763.0</TargetFrameworks>
+    <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
     <AssemblyName>liangwengu</AssemblyName>
     <RootNamespace>Liangwengu</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Version>0.1.0</Version>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -19,13 +21,31 @@
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
+  <!-- Windows 特定配置 -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'">
+    <DefineConstants>$(DefineConstants);WIN32</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Windows GUI 应用不显示控制台；通用目标保留 Exe 供 macOS/Linux 使用。 -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'">
+    <OutputType>WinExe</OutputType>
+  </PropertyGroup>
+
   <ItemGroup>
+    <!-- 核心文件 -->
     <Compile Include="PricingSchema.fs" />
     <Compile Include="PricingFetcher.fs" />
-    <Compile Include="PricingService.fs" />
     <Compile Include="Domain.fs" />
+    <Compile Include="Native.fs" />
+    <!-- Autostart (跨平台条件编译) -->
     <Compile Include="Autostart.fs" />
+    <!-- Windows 特定 -->
+    <Compile Include="Notify.Windows.fs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'" />
+    <!-- 跨平台服务 -->
+    <Compile Include="PricingService.CrossPlatform.fs" />
+    <!-- UI 入口 -->
     <Compile Include="App.fs" />
+    <!-- 程序入口（必须是最后一个） -->
     <Compile Include="Program.fs" />
   </ItemGroup>
 

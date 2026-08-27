@@ -11,13 +11,23 @@ permissions:
 
 jobs:
   build-and-test:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            rid: win-x64
+            framework: net10.0-windows10.0.17763.0
+          - os: macos-latest
+            rid: osx-arm64
+            framework: net10.0
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Cache NuGet
         uses: actions/cache@v4
@@ -28,21 +38,28 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore main project
-        run: dotnet restore src/Liangwengu/Liangwengu.fsproj -r win-x64
+        run: dotnet restore src/Liangwengu/Liangwengu.fsproj -r ${{ matrix.rid }}
 
       - name: Restore test project
-        run: dotnet restore tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -r win-x64
+        run: dotnet restore tests/Liangwengu.Tests/Liangwengu.Tests.fsproj
 
-      - name: Build
-        run: dotnet build tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r win-x64 --no-restore
+      - name: Build main project
+        run: dotnet build src/Liangwengu/Liangwengu.fsproj -c Release -f ${{ matrix.framework }} -r ${{ matrix.rid }} --no-restore
+
+      - name: Build test project
+        run: dotnet build tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r win-x64 --no-build --verbosity normal
+        run: dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release --no-build --verbosity normal
+
+      - name: Publish dev Windows exe
+        if: github.event_name == 'pull_request' && matrix.os == 'windows-latest'
+        run: dotnet publish src/Liangwengu/Liangwengu.fsproj -c Release -f ${{ matrix.framework }} -r ${{ matrix.rid }} --self-contained true -o artifacts/windows-x64
 
       - name: Upload dev exe (PR preview)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: liangwengu-pr-${{ github.event.pull_request.number }}
-          path: src/Liangwengu/bin/Release/net8.0-windows10.0.17763.0/win-x64/publish/liangwengu.exe
+          path: artifacts/windows-x64/liangwengu.exe
           retention-days: 7

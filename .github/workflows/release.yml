@@ -11,22 +11,30 @@ permissions:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
       - uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.fsproj', '**/*.props', '**/*.targets') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-      - run: dotnet restore src/Liangwengu/Liangwengu.fsproj -r win-x64
-      - run: dotnet restore tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -r win-x64
-      - run: dotnet build tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r win-x64 --no-restore
-      - run: dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r win-x64 --no-build
+      - run: dotnet restore src/Liangwengu/Liangwengu.fsproj
+      - run: dotnet restore tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -r ${{ matrix.rid }}
+      - run: dotnet build tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r ${{ matrix.rid }} --no-restore
+      - run: dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r ${{ matrix.rid }} --no-build
 
   publish:
     needs: test
@@ -38,7 +46,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - uses: actions/cache@v4
         with:
@@ -50,16 +58,16 @@ jobs:
       - name: Publish single-file exe
         run: |
           dotnet publish src/Liangwengu/Liangwengu.fsproj `
-            -c Release -r win-x64 `
+            -c Release `
+            -f net10.0-windows10.0.17763.0 `
+            -r win-x64 `
             --self-contained true `
-            -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:EnableCompressionInSingleFile=true
+            -o artifacts/windows-x64
 
       - name: Verify single exe
         shell: pwsh
         run: |
-          $publishDir = "src/Liangwengu/bin/Release/net8.0-windows10.0.17763.0/win-x64/publish"
+          $publishDir = "artifacts/windows-x64"
           $exes = Get-ChildItem $publishDir -Filter *.exe
           if ($exes.Count -ne 1 -or $exes[0].Name -ne "liangwengu.exe") {
             Write-Error "publish directory must contain only liangwengu.exe, found: $($exes.Name -join ', ')"
@@ -77,7 +85,7 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}".TrimStart('v')
           Move-Item `
-            src/Liangwengu/bin/Release/net8.0-windows10.0.17763.0/win-x64/publish/liangwengu.exe `
+            artifacts/windows-x64/liangwengu.exe `
             liangwengu-${tag}-win-x64.exe
 
       - name: Generate sha256
