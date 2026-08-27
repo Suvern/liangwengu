@@ -56,8 +56,11 @@ type App() =
         let autostartLabel enabled = if enabled then "关闭开机启动" else "启用开机启动"
         let autostartItem = NativeMenuItem(Header = autostartLabel (Autostart.isEnabled ()))
         autostartItem.Click.Add(fun _ ->
-            if Autostart.isEnabled () then Autostart.disable () else Autostart.enable ()
-            autostartItem.Header <- autostartLabel (Autostart.isEnabled ()))
+            try
+                if Autostart.isEnabled () then Autostart.disable () else Autostart.enable ()
+                autostartItem.Header <- autostartLabel (Autostart.isEnabled ())
+            with ex ->
+                Console.Error.WriteLine($"Autostart operation failed: {ex.Message}"))
         menu.Add autostartItem
 
         let exitItem = NativeMenuItem(Header = "退出")
