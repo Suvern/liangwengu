@@ -21,19 +21,25 @@ module PricingService =
     let start (onUpdate: PricingSnapshot -> unit) : unit =
         let fetch () =
             async {
-                let! remote = PricingFetcher.tryFetchRemote ()
-                match remote with
-                | Some snap ->
-                    consecutiveFailures.Value <- 0
-                    Dispatcher.UIThread.Post(fun () ->
-                        PricingFetcher.saveLocalCache snap
-                        onUpdate snap)
-                | None ->
-                    if System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable () then
-                        incr consecutiveFailures
-                        if consecutiveFailures.Value >= 3 then
-                            consecutiveFailures.Value <- 0
-                            notify "liangwengu" "pricing.json拉取失败，请确认您可以正常访问GitHub"
+                try
+                    let! remote = PricingFetcher.tryFetchRemote ()
+                    match remote with
+                    | Some snap ->
+                        consecutiveFailures.Value <- 0
+                        Dispatcher.UIThread.Post(fun () ->
+                            try
+                                PricingFetcher.saveLocalCache snap
+                                onUpdate snap
+                            with ex ->
+                                Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Pricing update failed: {ex}"))
+                    | None ->
+                        if System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable () then
+                            incr consecutiveFailures
+                            if consecutiveFailures.Value >= 3 then
+                                consecutiveFailures.Value <- 0
+                                notify "liangwengu" "pricing.json拉取失败，请确认您可以正常访问GitHub"
+                with ex ->
+                    Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Pricing refresh failed: {ex}")
             } |> Async.Start
 
         let timer = DispatcherTimer()

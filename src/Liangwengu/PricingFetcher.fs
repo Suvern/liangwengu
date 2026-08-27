@@ -45,7 +45,9 @@ module PricingFetcher =
                 let json = File.ReadAllText(localCachePath)
                 PricingSchema.tryParse json
             else None
-        with _ -> None
+        with ex ->
+            Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Loading local pricing cache failed: {ex}")
+            None
 
     /// 将 snapshot 写入 APPDATA。失败静默（降级为不缓存）。
     let saveLocalCache (snap: PricingSnapshot) : unit =
@@ -53,7 +55,8 @@ module PricingFetcher =
             let dir = Path.GetDirectoryName(localCachePath)
             if not (Directory.Exists(dir)) then Directory.CreateDirectory(dir) |> ignore
             File.WriteAllText(localCachePath, System.Text.Json.JsonSerializer.Serialize(snap))
-        with _ -> ()
+        with ex ->
+            Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Saving local pricing cache failed: {ex}")
 
     // ---- 远程拉取 ----
 
@@ -64,13 +67,17 @@ module PricingFetcher =
                 let! resp =
                     http.Value.GetAsync(remoteUrl)
                     |> Async.AwaitTask
-                if not resp.IsSuccessStatusCode then return None
+                if not resp.IsSuccessStatusCode then
+                    Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Remote pricing returned HTTP {int resp.StatusCode}")
+                    return None
                 else
                     let! json =
                         resp.Content.ReadAsStringAsync()
                         |> Async.AwaitTask
                     return PricingSchema.tryParse json
-            with _ -> return None
+            with ex ->
+                Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Fetching remote pricing failed: {ex}")
+                return None
         }
 
     // ---- 启动加载（bundled → APPDATA → 异步远程）----

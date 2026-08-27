@@ -73,6 +73,9 @@ type App() =
 
         let refresh () =
             let utc = DateTime.UtcNow
+            // let utc = DateTime(2026, 8, 27, 9, 1, 1, DateTimeKind.Local) // mock峰
+            // let utc = DateTime(2026, 8, 27, 0, 1, 1, DateTimeKind.Local) // mock谷
+            
             let policy = activeSnapshot.PeakPolicy
             let period = Domain.periodOf policy utc
             let _, switchAt = Domain.nextSwitch policy utc
@@ -101,6 +104,8 @@ type App() =
         let icons = TrayIcons()
         icons.Add trayIcon
         TrayIcon.SetIcons(this, icons)
+        let platform = if OperatingSystem.IsMacOS() then "macOS" else Environment.OSVersion.Platform.ToString()
+        Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Tray icon initialized on {platform}")
 
         exitItem.Click.Add(fun _ ->
             match this.ApplicationLifetime with

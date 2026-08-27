@@ -6,9 +6,10 @@
 
 **效果展示**
 
-| 高峰时段                                  | 空闲时段                                    | 右键菜单                                          |
-|-------------------------------------------|---------------------------------------------|---------------------------------------------------|
-| ![](docs/assets/windows_preview_peak.png) | ![](docs/assets/windows_preview_valley.png) | ![](docs/assets/windows_preview_context_menu.png) |
+| 平台    | 高峰时段                                  | 空闲时段                                    | 右键菜单                                          |
+|---------|-------------------------------------------|---------------------------------------------|---------------------------------------------------|
+| Windows | ![](docs/assets/windows_preview_peak.png) | ![](docs/assets/windows_preview_valley.png) | ![](docs/assets/windows_preview_context_menu.png) |
+| macOS   | ![](docs/assets/macos_preview_preak.png)  | ![](docs/assets/macos_preview_valley.png)  | ![](docs/assets/macos_preview_context_menu.png)   |
 
 ---
 
