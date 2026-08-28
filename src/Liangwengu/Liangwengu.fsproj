@@ -41,8 +41,14 @@
     <Compile Include="Platform\Native.fs" />
     <Compile Include="Platform\Autostart.fs" />
     <Compile Include="Platform\Notify.Windows.fs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'" />
+    <Compile Include="Platform\Notification.fs" />
     <!-- 应用服务 -->
-    <Compile Include="Application\PricingService.CrossPlatform.fs" />
+    <Compile Include="Application\PricingRefreshState.fs" />
+    <Compile Include="Application\PricingRefreshService.fs" />
+    <!-- 托盘 UI -->
+    <Compile Include="Presentation\TrayMenu.fs" />
+    <Compile Include="Presentation\TrayView.fs" />
+    <Compile Include="Presentation\TrayApplication.fs" />
     <!-- UI 入口 -->
     <Compile Include="App.fs" />
     <!-- 程序入口（必须是最后一个） -->

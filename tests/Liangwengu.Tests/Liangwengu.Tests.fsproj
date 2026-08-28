@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="PricingSchemaTests.fs" />
     <Compile Include="DomainTests.fs" />
+    <Compile Include="PricingRefreshStateTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
