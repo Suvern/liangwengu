@@ -42,6 +42,7 @@
     <Compile Include="Platform\SingleInstance.fs" />
     <Compile Include="Platform\Autostart.fs" />
     <Compile Include="Platform\Notify.Windows.fs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'" />
+    <Compile Include="Platform\Notify.Mac.fs" Condition="'$(TargetFramework)' == 'net10.0'" />
     <Compile Include="Platform\Notification.fs" />
     <!-- 应用服务 -->
     <Compile Include="Application\PricingRefreshState.fs" />

@@ -11,7 +11,7 @@ module Notification =
             ()
 #else
         if OperatingSystem.IsMacOS() then
-            printfn $"[Notification] {title}: {message}"
+            Liangwengu.Mac.Notify.show title message
         else
             failwith "Linux notification is not implemented"
 #endif
