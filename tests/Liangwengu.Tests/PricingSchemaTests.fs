@@ -3,7 +3,8 @@ module Liangwengu.Tests.PricingSchemaTests
 open Liangwengu
 open Xunit
 
-let validV1 = """{
+let validV1 =
+    """{
   "schemaVersion": 1,
   "sourceHash": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
   "currency": "CNY",
@@ -27,7 +28,9 @@ let validV1 = """{
 let okOrFail r msg =
     match r with
     | Ok v -> v
-    | Error e -> Assert.Fail($"%s{msg}: %s{e}"); Unchecked.defaultof<_>
+    | Error e ->
+        Assert.Fail($"%s{msg}: %s{e}")
+        Unchecked.defaultof<_>
 
 let assertError r =
     match r with
@@ -57,12 +60,14 @@ let ``parse 不支持的 schemaVersion 返回 Error`` () =
 
 [<Fact>]
 let ``parse 缺少 schemaVersion 返回 Error`` () =
-    let json = """{
+    let json =
+        """{
   "sourceHash": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
   "currency": "CNY",
   "peakPolicy": { "weekdaysOnly": true, "windows": [{ "start": "01:00", "end": "04:00" }] },
   "models": [{ "modelId": "a", "displayName": "A", "peak": { "inputCacheHit": 1, "inputCacheMiss": 2, "output": 3 }, "offPeak": { "inputCacheHit": 0.5, "inputCacheMiss": 1, "output": 1.5 } }]
 }"""
+
     assertError (PricingSchema.parse json)
 
 [<Fact>]
@@ -73,24 +78,32 @@ let ``parse USD 币种也能解析`` () =
 
 [<Fact>]
 let ``parse 空的 windows 返回 Error`` () =
-    let json = validV1.Replace(
-        """[
+    let json =
+        validV1.Replace(
+            """[
       { "start": "01:00", "end": "04:00" },
       { "start": "06:00", "end": "10:00" }
-    ]""", "[]")
+    ]""",
+            "[]"
+        )
+
     assertError (PricingSchema.parse json)
 
 [<Fact>]
 let ``parse 空的 models 返回 Error`` () =
-    let json = validV1.Replace(
-        """[
+    let json =
+        validV1.Replace(
+            """[
     {
       "modelId": "deepseek-v4-flash",
       "displayName": "Flash",
       "peak":     { "inputCacheHit": 0.10, "inputCacheMiss": 3.0, "output": 9.0 },
       "offPeak":  { "inputCacheHit": 0.05, "inputCacheMiss": 1.5, "output": 4.5 }
     }
-  ]""", "[]")
+  ]""",
+            "[]"
+        )
+
     assertError (PricingSchema.parse json)
 
 [<Fact>]
@@ -114,7 +127,8 @@ let ``parseHHmm 解析小时分钟`` () =
 
 [<Fact>]
 let ``parse 多模型快照`` () =
-    let json = """{
+    let json =
+        """{
   "schemaVersion": 1,
   "sourceHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
   "currency": "CNY",
@@ -124,6 +138,7 @@ let ``parse 多模型快照`` () =
     { "modelId": "b", "displayName": "B", "peak": { "inputCacheHit": 4, "inputCacheMiss": 5, "output": 6 }, "offPeak": { "inputCacheHit": 2, "inputCacheMiss": 2.5, "output": 3 } }
   ]
 }"""
+
     let s = okOrFail (PricingSchema.parse json) "expected Ok"
     Assert.Equal(2, s.Models.Length)
     Assert.False(s.PeakPolicy.WeekdaysOnly)

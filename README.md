@@ -41,6 +41,23 @@
 ## Develop
 需要前置安装 [.NET 10](https://dotnet.microsoft.com/zh-cn/download) 环境
 
+### 代码格式化
+
+项目使用 [Fantomas](https://fsprojects.github.io/fantomas/) 统一 F# 源码格式。首次使用时启用提交钩子：
+
+```bash
+./scripts/install-hooks.sh
+```
+
+手动格式化全部 F# 代码：
+
+```bash
+dotnet tool restore
+dotnet fantomas src tests
+```
+
+CI 会检查所有 F# 文件是否已格式化。
+
 ### 启动项目
 
 **macOS:**

@@ -24,6 +24,7 @@ module Autostart =
 
     let disable () : unit =
         use key = Registry.CurrentUser.OpenSubKey(runKeySubPath, writable = true)
+
         if not (isNull key) then
             key.DeleteValue(valueName, throwOnMissingValue = false)
 #else
@@ -47,11 +48,15 @@ module Autostart =
         psi.RedirectStandardOutput <- true
         use proc = System.Diagnostics.Process.Start(psi)
         proc.WaitForExit()
+
         if proc.ExitCode <> 0 then
             failwith "无法获取当前 macOS 用户 ID"
+
         let uid = proc.StandardOutput.ReadToEnd().Trim()
+
         if String.IsNullOrWhiteSpace(uid) then
             failwith "无法获取当前 macOS 用户 ID"
+
         uid
 
     let private runLaunchctl (arguments: string list) =
@@ -62,6 +67,7 @@ module Autostart =
         psi.RedirectStandardError <- true
         use proc = System.Diagnostics.Process.Start(psi)
         proc.WaitForExit()
+
         if proc.ExitCode <> 0 then
             let stderr = proc.StandardError.ReadToEnd().Trim()
             failwith $"launchctl failed: {stderr}"
@@ -72,12 +78,15 @@ module Autostart =
 
     let enable () : unit =
         ensureMacOS ()
+
         match Environment.ProcessPath with
         | null -> failwith "无法获取当前进程路径"
         | path ->
             Directory.CreateDirectory(plistDir) |> ignore
             let escapedPath = xmlEscape path
-            let plist = $"""<?xml version="1.0" encoding="UTF-8"?>
+
+            let plist =
+                $"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -93,12 +102,14 @@ module Autostart =
     <false/>
             </dict>
             </plist>"""
+
             File.WriteAllText(plistPath, plist)
             let uid = currentUserId ()
             runLaunchctl [ "bootstrap"; $"gui/{uid}"; plistPath ]
 
     let disable () : unit =
         ensureMacOS ()
+
         if File.Exists(plistPath) then
             let uid = currentUserId ()
             runLaunchctl [ "bootout"; $"gui/{uid}/com.liangwengu" ]

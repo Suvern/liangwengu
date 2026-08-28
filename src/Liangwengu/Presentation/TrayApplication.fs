@@ -31,5 +31,11 @@ module TrayApplication =
         let icons = TrayIcons()
         icons.Add view.Icon
         TrayIcon.SetIcons(app, icons)
-        let platform = if OperatingSystem.IsMacOS() then "macOS" else Environment.OSVersion.Platform.ToString()
+
+        let platform =
+            if OperatingSystem.IsMacOS() then
+                "macOS"
+            else
+                Environment.OSVersion.Platform.ToString()
+
         Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Tray icon initialized on {platform}")

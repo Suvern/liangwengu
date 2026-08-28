@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -e
+
+is_fsharp_file() {
+    case "$1" in
+        *.fs|*.fsi|*.fsx) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+staged_fsharp_files=$(git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r file; do
+    if is_fsharp_file "$file"; then
+        printf '%s\n' "$file"
+    fi
+done)
+
+if [ -z "$staged_fsharp_files" ]; then
+    exit 0
+fi
+
+dotnet tool restore >/dev/null
+
+printf '%s\n' "$staged_fsharp_files" | while IFS= read -r file; do
+    dotnet fantomas "$file"
+    git add -- "$file"
+done

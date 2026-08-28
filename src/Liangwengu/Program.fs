@@ -27,7 +27,7 @@ let main (args: string[]) =
         eventArgs.SetObserved())
 
     try
-        match Liangwengu.Platform.SingleInstance.tryAcquire() with
+        match Liangwengu.Platform.SingleInstance.tryAcquire () with
         | None ->
             Console.Error.WriteLine("Liangwengu is already running.")
             0

@@ -5,23 +5,35 @@ open Liangwengu
 open Xunit
 
 // 官方英文版: Peak = 01:00-04:00 / 06:00-10:00 UTC，周一至周五；其余空闲
-let policy: PeakPolicy = {
-    WeekdaysOnly = true
-    Windows = [ { Start = "01:00"; End = "04:00" }; { Start = "06:00"; End = "10:00" } ]
-}
+let policy: PeakPolicy =
+    { WeekdaysOnly = true
+      Windows = [ { Start = "01:00"; End = "04:00" }; { Start = "06:00"; End = "10:00" } ] }
 
 // weekdaysOnly=false 的对照策略（旧规则：每天峰谷）
 let policyEveryDay: PeakPolicy = { policy with WeekdaysOnly = false }
 
 // 测试用模型表（与 bundled 解耦，保证期望稳定）
-let testModels: ModelPrices list = [
-    { ModelId = "deepseek-v4-flash"; DisplayName = "Flash";
-      Peak =     { InputCacheHit = 0.10m; InputCacheMiss = 3.0m; Output = 9.0m };
-      OffPeak =  { InputCacheHit = 0.05m; InputCacheMiss = 1.5m; Output = 4.5m } }
-    { ModelId = "deepseek-v4-pro"; DisplayName = "Pro";
-      Peak =     { InputCacheHit = 0.30m; InputCacheMiss = 9.0m; Output = 27.0m };
-      OffPeak =  { InputCacheHit = 0.15m; InputCacheMiss = 4.5m; Output = 13.5m } }
-]
+let testModels: ModelPrices list =
+    [ { ModelId = "deepseek-v4-flash"
+        DisplayName = "Flash"
+        Peak =
+          { InputCacheHit = 0.10m
+            InputCacheMiss = 3.0m
+            Output = 9.0m }
+        OffPeak =
+          { InputCacheHit = 0.05m
+            InputCacheMiss = 1.5m
+            Output = 4.5m } }
+      { ModelId = "deepseek-v4-pro"
+        DisplayName = "Pro"
+        Peak =
+          { InputCacheHit = 0.30m
+            InputCacheMiss = 9.0m
+            Output = 27.0m }
+        OffPeak =
+          { InputCacheHit = 0.15m
+            InputCacheMiss = 4.5m
+            Output = 13.5m } } ]
 
 // 2026-08-18 是周二（工作日）；周末用 08-22(六)/08-23(日)/08-24(一)
 let utc (h: int) (m: int) : DateTime =
@@ -33,29 +45,29 @@ let utcOn (month: int) (day: int) (h: int) (m: int) : DateTime =
 // ------ periodOf ------
 
 [<Theory>]
-[<InlineData(0, 59)>]   // 首峰前 1 分钟
-[<InlineData(4, 0)>]    // 晨峰结束
-[<InlineData(5, 59)>]   // 午间空闲尾
-[<InlineData(10, 0)>]   // 晚峰结束
+[<InlineData(0, 59)>] // 首峰前 1 分钟
+[<InlineData(4, 0)>] // 晨峰结束
+[<InlineData(5, 59)>] // 午间空闲尾
+[<InlineData(10, 0)>] // 晚峰结束
 [<InlineData(23, 30)>]
 [<InlineData(0, 0)>]
 let ``periodOf 空闲时段`` h m =
     Assert.Equal(OffPeak, Domain.periodOf policy (utc h m))
 
 [<Theory>]
-[<InlineData(1, 0)>]    // 首峰开始
-[<InlineData(3, 59)>]   // 首峰尾
-[<InlineData(6, 0)>]    // 次峰开始
-[<InlineData(9, 59)>]   // 次峰尾
+[<InlineData(1, 0)>] // 首峰开始
+[<InlineData(3, 59)>] // 首峰尾
+[<InlineData(6, 0)>] // 次峰开始
+[<InlineData(9, 59)>] // 次峰尾
 let ``periodOf 高峰时段`` h m =
     Assert.Equal(Peak, Domain.periodOf policy (utc h m))
 
 [<Theory>]
-[<InlineData(8, 22, 0, 0)>]   // 周六 00:00 UTC
-[<InlineData(8, 22, 1, 0)>]   // 周六 01:00 UTC（若非 weekdaysOnly 应为 Peak）
-[<InlineData(8, 22, 9, 0)>]   // 周六 09:00 UTC（若非 weekdaysOnly 应为 Peak）
-[<InlineData(8, 23, 0, 0)>]   // 周日 00:00 UTC
-[<InlineData(8, 23, 6, 30)>]  // 周日 06:30 UTC
+[<InlineData(8, 22, 0, 0)>] // 周六 00:00 UTC
+[<InlineData(8, 22, 1, 0)>] // 周六 01:00 UTC（若非 weekdaysOnly 应为 Peak）
+[<InlineData(8, 22, 9, 0)>] // 周六 09:00 UTC（若非 weekdaysOnly 应为 Peak）
+[<InlineData(8, 23, 0, 0)>] // 周日 00:00 UTC
+[<InlineData(8, 23, 6, 30)>] // 周日 06:30 UTC
 let ``periodOf 周末全天空闲`` month day h m =
     Assert.Equal(OffPeak, Domain.periodOf policy (utcOn month day h m))
 

@@ -12,9 +12,12 @@ module Notify =
         let xml = XmlDocument()
         let title = xmlEscape title
         let msg = xmlEscape msg
+
         xml.LoadXml(
             "<toast><visual><binding template=\"ToastText02\">"
             + $"<text id=\"1\">{title}</text><text id=\"2\">{msg}</text>"
-            + "</binding></visual></toast>")
+            + "</binding></visual></toast>"
+        )
+
         let toast = ToastNotification(xml)
         ToastNotificationManager.CreateToastNotifier("liangwengu").Show(toast)

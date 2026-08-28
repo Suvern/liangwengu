@@ -14,8 +14,10 @@ module SingleInstance =
 
     let tryAcquire () =
         try
-            let stream = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)
-            Some (new InstanceLease(stream) :> IDisposable)
+            let stream =
+                new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)
+
+            Some(new InstanceLease(stream) :> IDisposable)
         with
         | :? IOException -> None
         | :? UnauthorizedAccessException -> None

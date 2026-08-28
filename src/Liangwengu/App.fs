@@ -8,8 +8,7 @@ open Avalonia.Themes.Fluent
 type App() =
     inherit Application()
 
-    override this.Initialize() =
-        this.Styles.Add(FluentTheme())
+    override this.Initialize() = this.Styles.Add(FluentTheme())
 
     override this.OnFrameworkInitializationCompleted() =
         base.OnFrameworkInitializationCompleted()
@@ -19,5 +18,6 @@ type App() =
             Console.CancelKeyPress.Add(fun e ->
                 e.Cancel <- true
                 desktop.Shutdown())
+
             Liangwengu.Presentation.TrayApplication.start this desktop
         | _ -> ()

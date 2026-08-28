@@ -9,7 +9,8 @@ open System.Threading.Tasks
 module PricingFetcher =
 
     /// 远程 pricing.json 的 raw URL（GitHub raw 直出 JSON）
-    let private remoteUrl = "https://raw.githubusercontent.com/Suvern/liangwengu/master/pricing.json"
+    let private remoteUrl =
+        "https://raw.githubusercontent.com/Suvern/liangwengu/master/pricing.json"
 
     /// APPDATA 缓存路径：%APPDATA%\liangwengu\pricing.json
     let private localCachePath =
@@ -28,10 +29,13 @@ module PricingFetcher =
     let loadBundled () : PricingSnapshot =
         let asm = Assembly.GetExecutingAssembly()
         use stream = asm.GetManifestResourceStream(resourceName)
+
         if isNull stream then
             failwith $"embedded resource not found: %s{resourceName}"
+
         use reader = new StreamReader(stream)
         let json = reader.ReadToEnd()
+
         match PricingSchema.parse json with
         | Ok s -> s
         | Error e -> failwith $"bundled pricing.json failed to parse: %s{e}"
@@ -44,7 +48,8 @@ module PricingFetcher =
             if File.Exists(localCachePath) then
                 let json = File.ReadAllText(localCachePath)
                 PricingSchema.tryParse json
-            else None
+            else
+                None
         with ex ->
             Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Loading local pricing cache failed: {ex}")
             None
@@ -53,7 +58,10 @@ module PricingFetcher =
     let saveLocalCache (snap: PricingSnapshot) : unit =
         try
             let dir = Path.GetDirectoryName(localCachePath)
-            if not (Directory.Exists(dir)) then Directory.CreateDirectory(dir) |> ignore
+
+            if not (Directory.Exists(dir)) then
+                Directory.CreateDirectory(dir) |> ignore
+
             File.WriteAllText(localCachePath, System.Text.Json.JsonSerializer.Serialize(snap))
         with ex ->
             Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Saving local pricing cache failed: {ex}")
@@ -64,16 +72,16 @@ module PricingFetcher =
     let tryFetchRemote () : PricingSnapshot option Async =
         async {
             try
-                let! resp =
-                    http.Value.GetAsync(remoteUrl)
-                    |> Async.AwaitTask
+                let! resp = http.Value.GetAsync(remoteUrl) |> Async.AwaitTask
+
                 if not resp.IsSuccessStatusCode then
-                    Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Remote pricing returned HTTP {int resp.StatusCode}")
+                    Console.Error.WriteLine(
+                        $"[{DateTimeOffset.Now:O}] Remote pricing returned HTTP {int resp.StatusCode}"
+                    )
+
                     return None
                 else
-                    let! json =
-                        resp.Content.ReadAsStringAsync()
-                        |> Async.AwaitTask
+                    let! json = resp.Content.ReadAsStringAsync() |> Async.AwaitTask
                     return PricingSchema.tryParse json
             with ex ->
                 Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Fetching remote pricing failed: {ex}")
@@ -86,6 +94,7 @@ module PricingFetcher =
     /// 返回 (snapshot, 是否用了本地缓存)。
     let loadInitial () : PricingSnapshot =
         let bundled = loadBundled ()
+
         match loadLocalCache () with
         | Some cached -> cached
         | None -> bundled

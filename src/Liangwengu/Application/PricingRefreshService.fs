@@ -12,9 +12,11 @@ module PricingService =
             async {
                 try
                     let! remote = PricingFetcher.tryFetchRemote ()
+
                     match remote with
                     | Some snap ->
                         refreshState <- Application.PricingRefreshState.succeeded ()
+
                         Dispatcher.UIThread.Post(fun () ->
                             try
                                 PricingFetcher.saveLocalCache snap
@@ -22,14 +24,16 @@ module PricingService =
                             with ex ->
                                 Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Pricing update failed: {ex}"))
                     | None ->
-                        if System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable () then
+                        if System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable() then
                             let state, shouldNotify = Application.PricingRefreshState.failed refreshState
                             refreshState <- state
+
                             if shouldNotify then
                                 Platform.Notification.show "liangwengu" "pricing.json拉取失败，请确认您可以正常访问GitHub"
                 with ex ->
                     Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Pricing refresh failed: {ex}")
-            } |> Async.Start
+            }
+            |> Async.Start
 
         let timer = DispatcherTimer()
         timer.Interval <- TimeSpan.FromMinutes 30.0

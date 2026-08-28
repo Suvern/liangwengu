@@ -15,13 +15,19 @@ module Domain =
     /// UTC 时间 + 峰谷策略 -> 当前计费时段
     /// weekdaysOnly=true 时，周六日整天为 OffPeak。
     let periodOf (policy: PeakPolicy) (utc: DateTime) : Period =
-        if policy.WeekdaysOnly && (utc.DayOfWeek = DayOfWeek.Saturday || utc.DayOfWeek = DayOfWeek.Sunday) then
+        if
+            policy.WeekdaysOnly
+            && (utc.DayOfWeek = DayOfWeek.Saturday || utc.DayOfWeek = DayOfWeek.Sunday)
+        then
             OffPeak
         else
             let mins = utc.Hour * 60 + utc.Minute
+
             policy.Windows
             |> List.exists (fun w -> mins >= PricingSchema.parseHHmm w.Start && mins < PricingSchema.parseHHmm w.End)
-            |> function true -> Peak | false -> OffPeak
+            |> function
+                | true -> Peak
+                | false -> OffPeak
 
     /// UTC 时间 + 峰谷策略 -> 下一次切换的时刻（UTC）与切换后的时段
     /// weekdaysOnly=true 时，周五 10:00 后的下一个切换是周一 01:00（跳过整个周末）。
@@ -42,7 +48,7 @@ module Domain =
         let rec loop (date: DateTime) =
             if isWeekday date then
                 match firstBoundaryAfter date with
-                | Some (t, p) -> p, t
+                | Some(t, p) -> p, t
                 | None -> loop (date.AddDays 1.0)
             else
                 loop (date.AddDays 1.0)
@@ -50,13 +56,19 @@ module Domain =
         loop utc.Date
 
     let periodEmoji (p: Period) =
-        match p with Peak -> "😈" | OffPeak -> "😊"
+        match p with
+        | Peak -> "😈"
+        | OffPeak -> "😊"
 
     let periodLabel (p: Period) =
-        match p with Peak -> "峰" | OffPeak -> "谷"
+        match p with
+        | Peak -> "峰"
+        | OffPeak -> "谷"
 
     let private pricesOf (p: Period) (m: ModelPrices) =
-        match p with Peak -> m.Peak | OffPeak -> m.OffPeak
+        match p with
+        | Peak -> m.Peak
+        | OffPeak -> m.OffPeak
 
     let fmtPrice (d: decimal) : string = d.ToString("0.00")
 
@@ -68,7 +80,11 @@ module Domain =
 
     /// 倒计时段: "距谷还有 1h23m"
     let private countdownPart (p: Period) (remaining: TimeSpan) : string =
-        let nextLabel = match p with Peak -> "谷" | OffPeak -> "峰"
+        let nextLabel =
+            match p with
+            | Peak -> "谷"
+            | OffPeak -> "峰"
+
         $"距%s{nextLabel}还有 %s{formatCountdown remaining}"
 
     /// 状态行: "😈 峰 · 距谷还有 1h23m"

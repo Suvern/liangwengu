@@ -5,11 +5,10 @@ open Avalonia.Controls
 open Avalonia.Platform
 open Liangwengu
 
-type TrayView = {
-    Icon: TrayIcon
-    PeakIcon: WindowIcon
-    ValleyIcon: WindowIcon
-}
+type TrayView =
+    { Icon: TrayIcon
+      PeakIcon: WindowIcon
+      ValleyIcon: WindowIcon }
 
 module TrayView =
     let create (menu: TrayMenu) =
@@ -19,14 +18,21 @@ module TrayView =
 
         let icon = new TrayIcon()
         icon.Menu <- menu.Root
-        let view = {
-            Icon = icon
-            PeakIcon = loadIcon "peak.png"
-            ValleyIcon = loadIcon "valley.png"
-        }
+
+        let view =
+            { Icon = icon
+              PeakIcon = loadIcon "peak.png"
+              ValleyIcon = loadIcon "valley.png" }
+
         view
 
-    let update (view: TrayView) (menu: TrayMenu) (snapshot: PricingSnapshot) (utc: DateTime) (currentPeriod: Period option) =
+    let update
+        (view: TrayView)
+        (menu: TrayMenu)
+        (snapshot: PricingSnapshot)
+        (utc: DateTime)
+        (currentPeriod: Period option)
+        =
         let period = Domain.periodOf snapshot.PeakPolicy utc
         let _, switchAt = Domain.nextSwitch snapshot.PeakPolicy utc
         let remaining = switchAt - utc
@@ -38,6 +44,9 @@ module TrayView =
         |> List.iter (fun (item, model) -> item.Header <- Domain.inputLine period model)
 
         if currentPeriod <> Some period then
-            view.Icon.Icon <- (match period with Peak -> view.PeakIcon | OffPeak -> view.ValleyIcon)
+            view.Icon.Icon <-
+                (match period with
+                 | Peak -> view.PeakIcon
+                 | OffPeak -> view.ValleyIcon)
 
         period
