@@ -1,26 +1,29 @@
 namespace Liangwengu.Mac
 
-open System.Diagnostics
+open System
+open UserNotifications
 
 module Notify =
-    let private escapeAppleScriptString (value: string) =
-        value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n")
-
     let show (title: string) (message: string) =
-        let psi = ProcessStartInfo()
-        psi.FileName <- "/usr/bin/osascript"
-        psi.ArgumentList.Add("-e")
+        let center = UNUserNotificationCenter.Current
 
-        psi.ArgumentList.Add(
-            $"display notification \"{escapeAppleScriptString message}\" with title \"{escapeAppleScriptString title}\""
+        center.RequestAuthorization(
+            UNAuthorizationOptions.Alert,
+            fun granted error ->
+                if granted then
+                    let content = new UNMutableNotificationContent()
+                    content.Title <- title
+                    content.Body <- message
+
+                    let request =
+                        UNNotificationRequest.FromIdentifier(Guid.NewGuid().ToString(), content, null)
+
+                    center.AddNotificationRequest(
+                        request,
+                        fun addError ->
+                            if not (isNull addError) then
+                                Console.Error.WriteLine($"macOS notification failed: {addError.LocalizedDescription}")
+                    )
+                elif not (isNull error) then
+                    Console.Error.WriteLine($"macOS notification permission denied: {error.LocalizedDescription}")
         )
-
-        psi.UseShellExecute <- false
-        psi.RedirectStandardError <- true
-
-        use notificationProcess = Process.Start(psi)
-        notificationProcess.WaitForExit()
-
-        if notificationProcess.ExitCode <> 0 then
-            let stderr = notificationProcess.StandardError.ReadToEnd().Trim()
-            failwith $"osascript notification failed: {stderr}"

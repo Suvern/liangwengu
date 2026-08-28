@@ -10,8 +10,9 @@ module Notification =
         with _ ->
             ()
 #else
-        if OperatingSystem.IsMacOS() then
-            Liangwengu.Mac.Notify.show title message
-        else
-            failwith "Linux notification is not implemented"
+#if MACOS
+        Liangwengu.Mac.Notify.show title message
+#else
+        failwith "Linux notification is not implemented"
+#endif
 #endif
