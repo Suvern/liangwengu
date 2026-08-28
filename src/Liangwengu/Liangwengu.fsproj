@@ -32,17 +32,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- 核心文件 -->
-    <Compile Include="PricingSchema.fs" />
-    <Compile Include="PricingFetcher.fs" />
-    <Compile Include="Domain.fs" />
-    <Compile Include="Native.fs" />
-    <!-- Autostart (跨平台条件编译) -->
-    <Compile Include="Autostart.fs" />
-    <!-- Windows 特定 -->
-    <Compile Include="Notify.Windows.fs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'" />
-    <!-- 跨平台服务 -->
-    <Compile Include="PricingService.CrossPlatform.fs" />
+    <!-- 领域 -->
+    <Compile Include="Domain\PricingSchema.fs" />
+    <Compile Include="Domain\Domain.fs" />
+    <!-- 基础设施 -->
+    <Compile Include="Infrastructure\PricingFetcher.fs" />
+    <!-- 平台适配 -->
+    <Compile Include="Platform\Native.fs" />
+    <Compile Include="Platform\Autostart.fs" />
+    <Compile Include="Platform\Notify.Windows.fs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'" />
+    <!-- 应用服务 -->
+    <Compile Include="Application\PricingService.CrossPlatform.fs" />
     <!-- UI 入口 -->
     <Compile Include="App.fs" />
     <!-- 程序入口（必须是最后一个） -->
