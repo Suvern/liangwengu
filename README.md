@@ -39,18 +39,24 @@
 - [ ] 支持更多平台峰谷定价
 
 ## Develop
-需要前置安装 [.NET 10](https://dotnet.microsoft.com/zh-cn/download) 环境。macOS 原生目标还需要安装 workload：
+需要前置安装 [.NET 10](https://dotnet.microsoft.com/zh-cn/download) 环境，macOS 原生目标还需要安装 workload：
 
 ```bash
-dotnet workload install macos
+sudo dotnet workload install macos
 ```
 
 ### 代码格式化
 
-项目使用 [Fantomas](https://fsprojects.github.io/fantomas/) 统一 F# 源码格式。首次使用时启用提交钩子：
+项目使用 [Fantomas](https://fsprojects.github.io/fantomas/) 统一 F# 源码格式，首次使用时启用 Commit-Hooks：
 
 ```bash
 ./scripts/install-hooks.sh
+```
+
+Windows PowerShell：
+
+```powershell
+.\scripts\install-hooks.ps1
 ```
 
 手动格式化全部 F# 代码：
