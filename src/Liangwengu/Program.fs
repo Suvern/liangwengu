@@ -27,12 +27,19 @@ let main (args: string[]) =
         eventArgs.SetObserved())
 
     try
-        AppBuilder
-            .Configure<App>()
-            .UsePlatformDetect()
-            .WithInterFont()
-            .LogToTrace()
-            .StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown)
+        match Liangwengu.Platform.SingleInstance.tryAcquire() with
+        | None ->
+            Console.Error.WriteLine("Liangwengu is already running.")
+            0
+        | Some instanceLease ->
+            use _instanceLease = instanceLease
+
+            AppBuilder
+                .Configure<App>()
+                .UsePlatformDetect()
+                .WithInterFont()
+                .LogToTrace()
+                .StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown)
     with ex ->
         logException "Application startup failed" ex
         1
