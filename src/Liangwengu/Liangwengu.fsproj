@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net10.0;net10.0-windows10.0.17763.0</TargetFrameworks>
+    <TargetFrameworks>net10.0;net10.0-macos;net10.0-windows10.0.17763.0</TargetFrameworks>
     <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
     <AssemblyName>liangwengu</AssemblyName>
     <RootNamespace>Liangwengu</RootNamespace>
@@ -26,7 +26,7 @@
     <DefineConstants>$(DefineConstants);WIN32</DefineConstants>
   </PropertyGroup>
 
-  <!-- Windows GUI 应用不显示控制台；通用目标保留 Exe 供 macOS/Linux 使用。 -->
+  <!-- Windows GUI 应用不显示控制台；通用目标供测试和其他桌面平台使用。 -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'">
     <OutputType>WinExe</OutputType>
   </PropertyGroup>
@@ -42,7 +42,8 @@
     <Compile Include="Platform\SingleInstance.fs" />
     <Compile Include="Platform\Autostart.fs" />
     <Compile Include="Platform\Notify.Windows.fs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'" />
-    <Compile Include="Platform\Notify.Mac.fs" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <Compile Include="Platform\Notify.Mac.fs"
+             Condition="'$(TargetFramework)' == 'net10.0' Or '$(TargetFramework)' == 'net10.0-macos'" />
     <Compile Include="Platform\Notification.fs" />
     <!-- 应用服务 -->
     <Compile Include="Application\PricingRefreshState.fs" />

@@ -55,9 +55,11 @@ echo -e "\033[36mPublishing for macOS $ARCH...\033[0m"
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$STAGING_DIR/publish" "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 
+dotnet workload restore "$PROJECT"
+
 dotnet publish "$PROJECT" \
     -c "$CONFIG" \
-    -f net10.0 \
+    -f net10.0-macos \
     -r "osx-$ARCH" \
     --self-contained true \
     -o "$STAGING_DIR/publish"

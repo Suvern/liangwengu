@@ -7,7 +7,7 @@ Liangwengu 是一个使用 F# 和 Avalonia.FuncUI 编写的跨平台系统托盘
 支持的运行目标：
 
 - Windows：`net10.0-windows10.0.17763.0`
-- macOS：`net10.0`
+- macOS：`net10.0-macos`
 - Runtime：`win-x64`、`osx-x64`、`osx-arm64`
 
 ## 主要功能
@@ -28,6 +28,7 @@ Liangwengu 是一个使用 F# 和 Avalonia.FuncUI 编写的跨平台系统托盘
 - `src/Liangwengu/App.fs`：Avalonia 生命周期和托盘 UI 编排
 - `src/Liangwengu/Autostart.fs`：平台开机启动实现
 - `src/Liangwengu/Notify.Windows.fs`：Windows Toast 实现
+- `src/Liangwengu/Notify.Mac.fs`：macOS 通知实现
 - `src/Liangwengu/Native.fs`：平台原生 API 声明
 - `tests/Liangwengu.Tests/`：领域逻辑和 Schema 单元测试
 - `scripts/pricing-snapshot/`：独立的定价数据生成工具，不属于运行时业务代码
@@ -44,8 +45,9 @@ dotnet build .\src\Liangwengu\Liangwengu.fsproj -c Release -f net10.0-windows10.
 macOS：
 
 ```bash
-dotnet run --project ./src/Liangwengu -f net10.0
-dotnet build ./src/Liangwengu/Liangwengu.fsproj -c Release -f net10.0
+dotnet workload install macos
+dotnet run --project ./src/Liangwengu -f net10.0-macos
+dotnet build ./src/Liangwengu/Liangwengu.fsproj -c Release -f net10.0-macos
 ```
 
 单元测试：

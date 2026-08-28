@@ -17,22 +17,28 @@ jobs:
         include:
           - os: windows-latest
             rid: win-x64
+            framework: net10.0-windows10.0.17763.0
           - os: macos-14
             rid: osx-arm64
+            framework: net10.0-macos
           - os: macos-13
             rid: osx-x64
+            framework: net10.0-macos
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - name: Install macOS workload
+        if: startsWith(matrix.os, 'macos-')
+        run: dotnet workload install macos
       - uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.fsproj', '**/*.props', '**/*.targets') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-      - run: dotnet restore src/Liangwengu/Liangwengu.fsproj
+      - run: dotnet restore src/Liangwengu/Liangwengu.fsproj -r ${{ matrix.rid }} -p:TargetFramework=${{ matrix.framework }}
       - run: dotnet restore tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -r ${{ matrix.rid }}
       - run: dotnet build tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r ${{ matrix.rid }} --no-restore
       - run: dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r ${{ matrix.rid }} --no-build
@@ -48,6 +54,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - name: Install macOS workload
+        run: dotnet workload install macos
 
       - uses: actions/cache@v4
         with:

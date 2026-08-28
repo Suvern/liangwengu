@@ -39,7 +39,11 @@
 - [ ] 支持更多平台峰谷定价
 
 ## Develop
-需要前置安装 [.NET 10](https://dotnet.microsoft.com/zh-cn/download) 环境
+需要前置安装 [.NET 10](https://dotnet.microsoft.com/zh-cn/download) 环境。macOS 原生目标还需要安装 workload：
+
+```bash
+dotnet workload install macos
+```
 
 ### 代码格式化
 
@@ -62,7 +66,7 @@ CI 会检查所有 F# 文件是否已格式化。
 
 **macOS:**
 ```bash
-dotnet run --project ./src/Liangwengu -f net10.0
+dotnet run --project ./src/Liangwengu -f net10.0-macos
 ```
 
 **Windows:**
