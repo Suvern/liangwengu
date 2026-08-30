@@ -72,9 +72,25 @@ module Autostart =
             let stderr = proc.StandardError.ReadToEnd().Trim()
             failwith $"launchctl failed: {stderr}"
 
+    let private launchctlSucceeds (arguments: string list) =
+        try
+            let psi = System.Diagnostics.ProcessStartInfo()
+            psi.FileName <- "/bin/launchctl"
+            arguments |> List.iter psi.ArgumentList.Add
+            psi.UseShellExecute <- false
+            psi.RedirectStandardError <- true
+            use proc = System.Diagnostics.Process.Start(psi)
+            proc.WaitForExit()
+            proc.ExitCode = 0
+        with _ ->
+            false
+
+    let private serviceTarget uid = $"gui/{uid}/com.liangwengu"
+
     let isEnabled () : bool =
         ensureMacOS ()
-        File.Exists(plistPath)
+        let uid = currentUserId ()
+        File.Exists(plistPath) && launchctlSucceeds [ "print"; serviceTarget uid ]
 
     let enable () : unit =
         ensureMacOS ()
@@ -84,6 +100,10 @@ module Autostart =
         | path ->
             Directory.CreateDirectory(plistDir) |> ignore
             let escapedPath = xmlEscape path
+            let uid = currentUserId ()
+
+            if launchctlSucceeds [ "print"; serviceTarget uid ] then
+                runLaunchctl [ "bootout"; serviceTarget uid ]
 
             let plist =
                 $"""<?xml version="1.0" encoding="UTF-8"?>
@@ -103,15 +123,23 @@ module Autostart =
             </dict>
             </plist>"""
 
-            File.WriteAllText(plistPath, plist)
-            let uid = currentUserId ()
-            runLaunchctl [ "bootstrap"; $"gui/{uid}"; plistPath ]
+            try
+                File.WriteAllText(plistPath, plist)
+                runLaunchctl [ "bootstrap"; $"gui/{uid}"; plistPath ]
+            with _ ->
+                if File.Exists(plistPath) then
+                    File.Delete(plistPath)
+
+                reraise ()
 
     let disable () : unit =
         ensureMacOS ()
 
+        let uid = currentUserId ()
+
+        if launchctlSucceeds [ "print"; serviceTarget uid ] then
+            runLaunchctl [ "bootout"; serviceTarget uid ]
+
         if File.Exists(plistPath) then
-            let uid = currentUserId ()
-            runLaunchctl [ "bootout"; $"gui/{uid}/com.liangwengu" ]
             File.Delete(plistPath)
 #endif
