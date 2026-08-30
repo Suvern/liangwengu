@@ -18,10 +18,10 @@ jobs:
           - os: windows-latest
             rid: win-x64
             framework: net10.0-windows10.0.17763.0
-          - os: macos-14
+          - os: macos-26
             rid: osx-arm64
             framework: net10.0-macos
-          - os: macos-13
+          - os: macos-26-intel
             rid: osx-x64
             framework: net10.0-macos
     steps:
