@@ -12,6 +12,7 @@ CONFIG="Release"
 OUTPUT_DIR="artifacts/macos-$ARCH"
 APP_NAME="Liangwengu.app"
 APP_DIR="$OUTPUT_DIR/$APP_NAME"
+BUILT_APP="src/Liangwengu/bin/$CONFIG/net10.0-macos/osx-$ARCH/liangwengu.app"
 ICON_SOURCE="src/Liangwengu/Assets/app-icon.png"
 STAGING_DIR="$(mktemp -d)"
 
@@ -53,19 +54,21 @@ done
 echo -e "\033[36mPublishing for macOS $ARCH...\033[0m"
 
 rm -rf "$OUTPUT_DIR"
-mkdir -p "$STAGING_DIR/publish" "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
+mkdir -p "$OUTPUT_DIR"
 
-dotnet workload restore "$PROJECT"
-
-dotnet publish "$PROJECT" \
+dotnet build "$PROJECT" \
     -c "$CONFIG" \
     -f net10.0-macos \
     -r "osx-$ARCH" \
     --self-contained true \
-    -o "$STAGING_DIR/publish"
+    -p:CreatePackage=false
 
-cp "$STAGING_DIR/publish/liangwengu" "$APP_DIR/Contents/MacOS/liangwengu"
-chmod +x "$APP_DIR/Contents/MacOS/liangwengu"
+if [ ! -d "$BUILT_APP" ]; then
+    echo -e "\033[31mError: macOS app bundle not found: $BUILT_APP\033[0m"
+    exit 1
+fi
+
+cp -R "$BUILT_APP" "$APP_DIR"
 cp "$ICON_SOURCE" "$APP_DIR/Contents/Resources/app-icon.png"
 
 ICONSET_DIR="$STAGING_DIR/Liangwengu.iconset"
@@ -105,6 +108,8 @@ cat > "$APP_DIR/Contents/Info.plist" <<EOF
 </dict>
 </plist>
 EOF
+
+codesign --deep --force --sign - "$APP_DIR" >/dev/null
 
 DMG_ROOT="$STAGING_DIR/dmg"
 mkdir -p "$DMG_ROOT"
