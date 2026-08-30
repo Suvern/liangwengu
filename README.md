@@ -83,33 +83,21 @@ dotnet run --project ./src/Liangwengu -f net10.0-windows10.0.17763.0
 ### 发布
 
 **macOS (ARM64):**
+> 产物位于: artifacts/macos-arm64/liangwengu-0.1.0-macos-arm64.dmg
 ```bash
 ./scripts/build-mac.sh arm64 0.1.0
-# 产物: artifacts/macos-arm64/liangwengu-0.1.0-macos-arm64.dmg
 ```
 
 **macOS (x64):**
+> 产物位于: artifacts/macos-x64/liangwengu-0.1.0-macos-x64.dmg
 ```bash
 ./scripts/build-mac.sh x64 0.1.0
-# 产物: artifacts/macos-x64/liangwengu-0.1.0-macos-x64.dmg
 ```
 
 **Windows (x64):**
+> 产物位于: artifacts\windows-x64\liangwengu.exe
 ```powershell
 .\scripts\build-win.ps1 x64
-# 产物位于: artifacts\windows-x64\liangwengu.exe
-```
-
-### 手动发布命令
-
-**macOS:**
-```bash
-./scripts/build-mac.sh arm64 0.1.0
-```
-
-**Windows:**
-```bash
-dotnet publish src/Liangwengu/Liangwengu.fsproj -c Release -f net10.0-windows10.0.17763.0 -r win-x64 --self-contained true -o artifacts/windows-x64
 ```
 
 ## License
