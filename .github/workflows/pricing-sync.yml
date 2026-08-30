@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: tools/pricing-snapshot
+        working-directory: scripts/pricing-snapshot
     steps:
       - uses: actions/checkout@v4
 
