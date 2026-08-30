@@ -17,7 +17,7 @@ Liangwengu 是一个使用 F# 和 Avalonia.FuncUI 编写的跨平台系统托盘
 - 从 GitHub 远程拉取 `pricing.json`
 - 使用本地缓存和 EmbeddedResource 数据离线兜底
 - 支持 Windows 注册表和 macOS LaunchAgent 开机启动
-- Windows 支持 Toast 通知
+- Windows 支持 Toast 通知，macOS 支持 UserNotifications 系统通知
 
 ## 代码边界
 
