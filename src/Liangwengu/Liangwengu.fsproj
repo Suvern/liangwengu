@@ -33,6 +33,7 @@
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-macos'">
     <ApplicationId>com.liangwengu.app</ApplicationId>
+    <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
     <UseAppHost>true</UseAppHost>
     <PublishSingleFile>false</PublishSingleFile>
     <PublishReadyToRun>false</PublishReadyToRun>
