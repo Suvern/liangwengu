@@ -116,9 +116,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner: macos-14
+          - runner: macos-26
             arch: arm64
-          - runner: macos-13
+          - runner: macos-26-intel
             arch: x64
     runs-on: ${{ matrix.runner }}
     steps:

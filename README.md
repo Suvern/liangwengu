@@ -100,6 +100,7 @@ dotnet run --project ./src/Liangwengu -f net10.0-windows10.0.17763.0
 .\scripts\build-win.ps1 x64
 ```
 
+macOS 发布包当前使用 ad-hoc 签名，适合通过 GitHub 分发和测试，但未进行 Apple notarization。首次打开时若被 Gatekeeper 拦截，请在“系统设置 → 隐私与安全性”中允许打开该应用。
 
 ### 测试
 

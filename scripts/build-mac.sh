@@ -15,8 +15,13 @@ APP_DIR="$OUTPUT_DIR/$APP_NAME"
 BUILT_APP="src/Liangwengu/bin/$CONFIG/net10.0-macos/osx-$ARCH/liangwengu.app"
 ICON_SOURCE="src/Liangwengu/Assets/app-icon.png"
 STAGING_DIR="$(mktemp -d)"
+VERIFY_MOUNT_DIR="$STAGING_DIR/mounted-dmg"
+DMG_MOUNTED=false
 
 cleanup() {
+    if [ "$DMG_MOUNTED" = true ]; then
+        hdiutil detach "$VERIFY_MOUNT_DIR" -quiet || true
+    fi
     rm -rf "$STAGING_DIR"
 }
 trap cleanup EXIT
@@ -80,6 +85,22 @@ for size in 16 32 128 256 512; do
 done
 iconutil -c icns "$ICONSET_DIR" -o "$APP_DIR/Contents/Resources/app-icon.icns"
 
+# 验证 app bundle 的关键发布内容
+if [ ! -f "$APP_DIR/Contents/Resources/app-icon.icns" ]; then
+    echo -e "\033[31mError: app icon was not added to the bundle\033[0m"
+    exit 1
+fi
+
+EXPECTED_ARCH="arm64"
+if [ "$ARCH" = "x64" ]; then
+    EXPECTED_ARCH="x86_64"
+fi
+
+if ! lipo -archs "$APP_DIR/Contents/MacOS/liangwengu" | tr ' ' '\n' | grep -Fxq "$EXPECTED_ARCH"; then
+    echo -e "\033[31mError: app executable does not contain the expected $EXPECTED_ARCH architecture\033[0m"
+    exit 1
+fi
+
 cat > "$APP_DIR/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -110,6 +131,12 @@ cat > "$APP_DIR/Contents/Info.plist" <<EOF
 EOF
 
 codesign --deep --force --sign - "$APP_DIR" >/dev/null
+codesign --verify --deep --strict --verbose=2 "$APP_DIR"
+
+if [ "$(plutil -extract CFBundleIdentifier raw "$APP_DIR/Contents/Info.plist")" != "com.liangwengu.app" ]; then
+    echo -e "\033[31mError: unexpected bundle identifier\033[0m"
+    exit 1
+fi
 
 DMG_ROOT="$STAGING_DIR/dmg"
 mkdir -p "$DMG_ROOT"
@@ -124,6 +151,19 @@ hdiutil create \
     -ov \
     -format UDZO \
     "$DMG_PATH" >/dev/null
+
+hdiutil verify "$DMG_PATH"
+mkdir -p "$VERIFY_MOUNT_DIR"
+hdiutil attach "$DMG_PATH" -readonly -nobrowse -mountpoint "$VERIFY_MOUNT_DIR" >/dev/null
+DMG_MOUNTED=true
+
+if [ ! -d "$VERIFY_MOUNT_DIR/$APP_NAME" ] || [ ! -L "$VERIFY_MOUNT_DIR/Applications" ]; then
+    echo -e "\033[31mError: DMG does not contain the expected app and Applications link\033[0m"
+    exit 1
+fi
+
+hdiutil detach "$VERIFY_MOUNT_DIR" -quiet
+DMG_MOUNTED=false
 
 echo -e "\033[32mPublish complete!\033[0m"
 echo ""
