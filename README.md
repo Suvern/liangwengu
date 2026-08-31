@@ -31,6 +31,18 @@
 * 右键托盘图标查看详细状态、设置开机启动
 * 定价数据动态拉取：LLM 解析官网 → GitHub 托管 JSON → 程序每 30 min 自动更新，离线用 bundled 兜底
 
+## Usage
+
+### 系统要求
+
+* Windows：Windows 10 1809（build 10.0.17763）及以上
+
+### 下载安装
+
+去 [Release](https://github.com/Suvern/liangwengu/releases) 页面下载最新的可执行二进制程序
+
+* Windows: 下载 `liangwengu-x.y.z-win-x64.exe` 完成后双击即可运行（推荐将软件放进 `C:\Users\<user-name>]\AppData\Local\` 目录下）
+
 ## TODO
 - [x] 开机启动
 - [x] 从官网定价动态拉取数据而非写死
@@ -44,6 +56,66 @@
 ```bash
 sudo dotnet workload install macos
 ```
+
+### 启动项目
+
+**macOS:**
+```bash
+dotnet run --project ./src/Liangwengu -f net10.0-macos
+```
+
+**Windows:**
+```bash
+dotnet run --project ./src/Liangwengu -f net10.0-windows10.0.17763.0
+```
+
+### 测试
+
+测试项目为 `tests/Liangwengu.Tests/Liangwengu.Tests.fsproj`，包含领域测试和平台相关测试，并支持通用、Windows、macOS 三个 target。
+
+运行通用测试：
+
+```bash
+dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -f net10.0
+```
+
+在对应平台运行测试项目：
+
+macOS 测试需要先安装 workload：
+
+```bash
+sudo dotnet workload install macos
+```
+
+macOS Apple Silicon：
+
+```bash
+dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -f net10.0-macos -r osx-arm64
+```
+
+Windows：
+
+```powershell
+dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -f net10.0-windows10.0.17763.0 -r win-x64
+```
+
+### 系统通知测试
+
+系统通知 smoke test 必须运行正式的 apphost，不能使用 xUnit testhost。测试会请求系统发送一条通知，并返回提交结果。
+
+macOS Apple Silicon：
+
+```bash
+dotnet run --project src/Liangwengu/Liangwengu.fsproj -f net10.0-macos -r osx-arm64 -- --notification-smoke-test
+```
+
+macOS Intel 将 `osx-arm64` 替换为 `osx-x64`。Windows：
+
+```powershell
+dotnet run --project src/Liangwengu/Liangwengu.fsproj -f net10.0-windows10.0.17763.0 -r win-x64 -- --notification-smoke-test
+```
+
+Windows 和 macOS 都需要允许应用发送通知。`Notification submitted successfully.` 只表示系统已接受请求，通知是否可见还取决于系统权限和勿扰模式。
 
 ### 代码格式化
 
@@ -68,19 +140,7 @@ dotnet fantomas src tests
 
 CI 会检查所有 F# 文件是否已格式化。
 
-### 启动项目
-
-**macOS:**
-```bash
-dotnet run --project ./src/Liangwengu -f net10.0-macos
-```
-
-**Windows:**
-```bash
-dotnet run --project ./src/Liangwengu -f net10.0-windows10.0.17763.0
-```
-
-### 发布
+### 打包（发布）
 
 **macOS (ARM64):**
 > 产物位于: artifacts/macos-arm64/liangwengu-0.1.0-macos-arm64.dmg
@@ -101,54 +161,6 @@ dotnet run --project ./src/Liangwengu -f net10.0-windows10.0.17763.0
 ```
 
 macOS 发布包当前使用 ad-hoc 签名，适合通过 GitHub 分发和测试，但未进行 Apple notarization。首次打开时若被 Gatekeeper 拦截，请在“系统设置 → 隐私与安全性”中允许打开该应用。
-
-### 测试
-
-测试项目为 `tests/Liangwengu.Tests/Liangwengu.Tests.fsproj`，包含领域测试和平台相关测试，并支持通用、Windows、macOS 三个 target。
-
-运行通用测试：
-
-```bash
-dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -f net10.0
-```
-
-在对应平台运行测试项目：
-
-macOS Apple Silicon：
-
-```bash
-dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -f net10.0-macos -r osx-arm64
-```
-
-Windows：
-
-```powershell
-dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -f net10.0-windows10.0.17763.0 -r win-x64
-```
-
-macOS 测试需要先安装 workload：
-
-```bash
-sudo dotnet workload install macos
-```
-
-### 原生通知测试
-
-原生通知 smoke test 必须运行正式的 apphost，不能使用 xUnit testhost。测试会请求系统发送一条通知，并返回提交结果。
-
-macOS Apple Silicon：
-
-```bash
-dotnet run --project src/Liangwengu/Liangwengu.fsproj -f net10.0-macos -r osx-arm64 -- --notification-smoke-test
-```
-
-macOS Intel 将 `osx-arm64` 替换为 `osx-x64`。Windows：
-
-```powershell
-dotnet run --project src/Liangwengu/Liangwengu.fsproj -f net10.0-windows10.0.17763.0 -r win-x64 -- --notification-smoke-test
-```
-
-Windows 和 macOS 都需要允许应用发送通知。`Notification submitted successfully.` 只表示系统已接受请求，通知是否可见还取决于系统权限和勿扰模式。
 
 ## License
 [MIT](LICENSE)
