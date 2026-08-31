@@ -30,11 +30,34 @@ if ($Arch -ne "x64") {
 
 Write-Host "Publishing for Windows $Arch..." -ForegroundColor Cyan
 
-dotnet publish $project -c $config -f net10.0-windows10.0.17763.0 -r win-$Arch --self-contained true -o $outputDir
+if (Test-Path -LiteralPath $outputDir) {
+    Remove-Item -LiteralPath $outputDir -Recurse -Force
+}
+
+dotnet restore $project -r win-$Arch -p:TargetFramework=net10.0-windows10.0.17763.0
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Restore failed with exit code $LASTEXITCODE" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+
+dotnet publish $project -c $config -f net10.0-windows10.0.17763.0 -r win-$Arch --self-contained true --no-restore -o $outputDir
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Publish failed with exit code $LASTEXITCODE" -ForegroundColor Red
     exit $LASTEXITCODE
+}
+
+$exes = @(Get-ChildItem -LiteralPath $outputDir -Filter *.exe -File)
+if ($exes.Count -ne 1 -or $exes[0].Name -ne "liangwengu.exe") {
+    Write-Host "Error: publish directory must contain only liangwengu.exe, found: $($exes.Name -join ', ')" -ForegroundColor Red
+    exit 1
+}
+
+$leftover = @(Get-ChildItem -LiteralPath $outputDir -File | Where-Object { $_.Extension -notin @('.exe', '.pdb') })
+if ($leftover.Count -gt 0) {
+    Write-Host "Error: publish directory has unexpected files: $($leftover.Name -join ', ')" -ForegroundColor Red
+    exit 1
 }
 
 Write-Host "`nPublish complete!" -ForegroundColor Green

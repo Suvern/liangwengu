@@ -64,11 +64,17 @@ jobs:
 
       - name: Publish single-file exe
         run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          dotnet restore src/Liangwengu/Liangwengu.fsproj `
+            -r win-x64 `
+            -p:TargetFramework=net10.0-windows10.0.17763.0
           dotnet publish src/Liangwengu/Liangwengu.fsproj `
             -c Release `
             -f net10.0-windows10.0.17763.0 `
             -r win-x64 `
             --self-contained true `
+            --no-restore `
+            -p:Version=$version `
             -o artifacts/windows-x64
 
       - name: Verify single exe
