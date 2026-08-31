@@ -69,10 +69,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.*" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.*" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.*" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.*" />
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
     <!-- M4 自定义面板(MVU)前基本不用，按既定决策保留引用 -->
     <PackageReference Include="Avalonia.FuncUI" Version="2.0.0" />
     <PackageReference Include="FSharp.SystemTextJson" Version="1.4.36" />
