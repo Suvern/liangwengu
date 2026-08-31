@@ -1,15 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net10.0-windows10.0.17763.0;net10.0-macos</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'">
+    <DefineConstants>$(DefineConstants);WIN32</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-macos'">
+    <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
+    <ApplicationId>com.liangwengu.tests</ApplicationId>
+    <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+    <UseAppHost>true</UseAppHost>
+    <!-- Xcode 26.6 is binary-compatible with the workload's 26.0 SDK. -->
+    <ValidateXcodeVersion>false</ValidateXcodeVersion>
+    <LinkMode>None</LinkMode>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="PricingSchemaTests.fs" />
     <Compile Include="DomainTests.fs" />
     <Compile Include="PricingRefreshStateTests.fs" />
+    <Compile Include="NotificationTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,7 +36,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Liangwengu\Liangwengu.fsproj" />
+    <ProjectReference Include="..\..\src\Liangwengu\Liangwengu.fsproj">
+      <AdditionalProperties>TargetFramework=$(TargetFramework)</AdditionalProperties>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

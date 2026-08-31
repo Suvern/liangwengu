@@ -30,6 +30,7 @@ module PricingService =
 
                             if shouldNotify then
                                 Platform.Notification.show "liangwengu" "pricing.json拉取失败，请确认您可以正常访问GitHub"
+                                |> ignore
                 with ex ->
                     Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Pricing refresh failed: {ex}")
             }

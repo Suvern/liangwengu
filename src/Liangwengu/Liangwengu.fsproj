@@ -37,6 +37,8 @@
     <UseAppHost>true</UseAppHost>
     <PublishSingleFile>false</PublishSingleFile>
     <PublishReadyToRun>false</PublishReadyToRun>
+    <!-- Xcode 26.6 is binary-compatible with the workload's 26.x SDK. -->
+    <ValidateXcodeVersion>false</ValidateXcodeVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -80,6 +82,11 @@
     <AvaloniaResource Include="Assets\**" />
     <!-- pricing.json 既是远程托管源也是编译期内嵌兜底，单一来源 -->
     <EmbeddedResource Include="..\..\pricing.json" LogicalName="liangwengu.pricing.json" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-macos'">
+    <BundleResource Include="Assets\app-icon.png" LogicalName="app-icon.png" />
+    <PartialAppManifest Include="AppIcon.plist" />
   </ItemGroup>
 
 </Project>

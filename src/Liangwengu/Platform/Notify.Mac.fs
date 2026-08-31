@@ -1,29 +1,42 @@
 namespace Liangwengu.Mac
 
 open System
+open System.Threading.Tasks
 open UserNotifications
 
 module Notify =
     let show (title: string) (message: string) =
-        let center = UNUserNotificationCenter.Current
+        try
+            let center = UNUserNotificationCenter.Current
 
-        center.RequestAuthorization(
-            UNAuthorizationOptions.Alert,
-            fun granted error ->
-                if granted then
-                    let content = new UNMutableNotificationContent()
-                    content.Title <- title
-                    content.Body <- message
+            let result =
+                TaskCompletionSource<Result<unit, string>>(TaskCreationOptions.RunContinuationsAsynchronously)
 
-                    let request =
-                        UNNotificationRequest.FromIdentifier(Guid.NewGuid().ToString(), content, null)
+            center.RequestAuthorization(
+                UNAuthorizationOptions.Alert,
+                fun granted error ->
+                    if granted then
+                        let content = new UNMutableNotificationContent()
+                        content.Title <- title
+                        content.Body <- message
 
-                    center.AddNotificationRequest(
-                        request,
-                        fun addError ->
-                            if not (isNull addError) then
-                                Console.Error.WriteLine($"macOS notification failed: {addError.LocalizedDescription}")
-                    )
-                elif not (isNull error) then
-                    Console.Error.WriteLine($"macOS notification permission denied: {error.LocalizedDescription}")
-        )
+                        let request =
+                            UNNotificationRequest.FromIdentifier(Guid.NewGuid().ToString(), content, null)
+
+                        center.AddNotificationRequest(
+                            request,
+                            fun addError ->
+                                if isNull addError then
+                                    result.TrySetResult(Ok()) |> ignore
+                                else
+                                    result.TrySetResult(Error addError.LocalizedDescription) |> ignore
+                        )
+                    elif isNull error then
+                        result.TrySetResult(Error "macOS notification permission denied") |> ignore
+                    else
+                        result.TrySetResult(Error error.LocalizedDescription) |> ignore
+            )
+
+            result.Task
+        with ex ->
+            Task.FromResult(Error ex.Message)

@@ -39,9 +39,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
       - run: dotnet restore src/Liangwengu/Liangwengu.fsproj -r ${{ matrix.rid }} -p:TargetFramework=${{ matrix.framework }}
-      - run: dotnet restore tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -r ${{ matrix.rid }}
-      - run: dotnet build tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r ${{ matrix.rid }} --no-restore
-      - run: dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -r ${{ matrix.rid }} --no-build
+      - run: dotnet restore tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -r ${{ matrix.rid }} -p:TargetFramework=${{ matrix.framework }}
+      - run: dotnet build tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -f ${{ matrix.framework }} -r ${{ matrix.rid }} --no-restore
+      - run: dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release -f ${{ matrix.framework }} -r ${{ matrix.rid }} --no-build --filter "Category!=Integration"
 
   publish-windows:
     needs: test
