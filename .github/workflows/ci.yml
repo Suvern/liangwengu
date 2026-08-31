@@ -35,11 +35,12 @@ jobs:
         if: startsWith(matrix.framework, 'net10.0-macos')
         run: dotnet workload install macos
 
-      - name: Restore .NET tools
-        run: dotnet tool restore
+      - uses: extractions/setup-just@v3
+        with:
+          just-version: latest
 
       - name: Check F# formatting
-        run: dotnet fantomas src tests --check
+        run: just format-check
 
       - name: Cache NuGet
         uses: actions/cache@v4
@@ -66,7 +67,7 @@ jobs:
 
       - name: Publish dev Windows exe
         if: github.event_name == 'pull_request' && matrix.os == 'windows-latest'
-        run: dotnet publish src/Liangwengu/Liangwengu.fsproj -c Release -f ${{ matrix.framework }} -r ${{ matrix.rid }} --self-contained true -o artifacts/windows-x64
+        run: just publish-windows
 
       - name: Upload dev exe (PR preview)
         if: github.event_name == 'pull_request' && matrix.os == 'windows-latest'

@@ -51,7 +51,25 @@
 - [ ] 支持更多平台峰谷定价
 
 ## Develop
-需要前置安装 [.NET 10](https://dotnet.microsoft.com/zh-cn/download) 环境，macOS 原生目标还需要安装 workload：
+前置需要安装 [.NET 10](https://dotnet.microsoft.com/zh-cn/download) 环境
+
+本项目使用 [just](https://just.systems) 封装所有开发命令（`just --list` 查看全部命令），请预先安装 `just`：
+
+macOS：
+
+```bash
+brew install just
+```
+
+Windows：
+
+```powershell
+winget install Casey.Just
+```
+
+> Windows 下 just 依赖 Git for Windows 自带的 `sh` 与 `pwsh`（GitHub Desktop/VS 一般已带），同名 recipe 会通过 `[macos]`/`[windows]` 注解自动选择当前平台。
+
+macOS release/macos 目标还需要安装 workload：
 
 ```bash
 sudo dotnet workload install macos
@@ -59,60 +77,34 @@ sudo dotnet workload install macos
 
 ### 启动项目
 
-**macOS:**
-```bash
-dotnet run --project ./src/Liangwengu -f net10.0-macos
-```
+`run` 会自动选择当前平台的 target framework：
 
-**Windows:**
 ```bash
-dotnet run --project ./src/Liangwengu -f net10.0-windows10.0.17763.0
+just run
 ```
 
 ### 测试
 
-测试项目为 `tests/Liangwengu.Tests/Liangwengu.Tests.fsproj`，包含领域测试和平台相关测试，并支持通用、Windows、macOS 三个 target。
+测试项目为 `tests/Liangwengu.Tests/Liangwengu.Tests.fsproj`，包含领域测试和平台相关测试，并支持通用、Windows、macOS 三个 target
 
 运行通用测试：
 
 ```bash
-dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -f net10.0
+just test
 ```
 
-在对应平台运行测试项目：
-
-macOS 测试需要先安装 workload：
+运行平台相关测试：
 
 ```bash
-sudo dotnet workload install macos
-```
-
-macOS Apple Silicon：
-
-```bash
-dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -f net10.0-macos -r osx-arm64
-```
-
-Windows：
-
-```powershell
-dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -f net10.0-windows10.0.17763.0 -r win-x64
+just test-platform
 ```
 
 ### 系统通知测试
 
-系统通知 smoke test 必须运行正式的 apphost，不能使用 xUnit testhost。测试会请求系统发送一条通知，并返回提交结果。
-
-macOS Apple Silicon：
+系统通知 smoke test 必须运行正式的 apphost，不能使用 xUnit testhost；测试会请求系统发送一条通知，并返回提交结果
 
 ```bash
-dotnet run --project src/Liangwengu/Liangwengu.fsproj -f net10.0-macos -r osx-arm64 -- --notification-smoke-test
-```
-
-macOS Intel 将 `osx-arm64` 替换为 `osx-x64`。Windows：
-
-```powershell
-dotnet run --project src/Liangwengu/Liangwengu.fsproj -f net10.0-windows10.0.17763.0 -r win-x64 -- --notification-smoke-test
+just smoke-test
 ```
 
 Windows 和 macOS 都需要允许应用发送通知。`Notification submitted successfully.` 只表示系统已接受请求，通知是否可见还取决于系统权限和勿扰模式。
@@ -131,36 +123,31 @@ Windows PowerShell：
 .\scripts\install-hooks.ps1
 ```
 
-手动格式化全部 F# 代码：
+手动格式化全部 F# 代码，或只检查（与 CI 一致）：
 
 ```bash
-dotnet tool restore
-dotnet fantomas src tests
+just format
+just format-check
 ```
-
-CI 会检查所有 F# 文件是否已格式化。
 
 ### 打包（发布）
 
-**macOS (ARM64):**
-> 产物位于: artifacts/macos-arm64/liangwengu-0.1.0-macos-arm64.dmg
+**macOS:**
+> 产物位于: artifacts/macos-arm64/liangwengu-<version>-macos-arm64.dmg（Intel 则 macos-x64）
 ```bash
-./scripts/build-mac.sh arm64 0.1.0
+just publish-macos [arch] [version]    # 默认按当前 CPU 推导，version 默认 0.1.0
 ```
 
-**macOS (x64):**
-> 产物位于: artifacts/macos-x64/liangwengu-0.1.0-macos-x64.dmg
-```bash
-./scripts/build-mac.sh x64 0.1.0
-```
+**Windows:**
 
-**Windows (x64):**
 > 产物位于: artifacts\windows-x64\liangwengu.exe
 ```powershell
-.\scripts\build-win.ps1 x64
+just publish-windows
 ```
 
-macOS 发布包当前使用 ad-hoc 签名，适合通过 GitHub 分发和测试，但未进行 Apple notarization。首次打开时若被 Gatekeeper 拦截，请在“系统设置 → 隐私与安全性”中允许打开该应用。
+macOS 发布包当前使用 ad-hoc 签名，适合通过 GitHub 分发和测试，但未进行 Apple notarization
+
+首次打开时若被 Gatekeeper 拦截，请在“系统设置 → 隐私与安全性”中允许打开该应用
 
 ## License
 [MIT](LICENSE)

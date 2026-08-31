@@ -35,26 +35,20 @@ Liangwengu 是一个使用 F# 和 Avalonia.FuncUI 编写的跨平台系统托盘
 
 ## 构建与测试
 
-Windows：
-
-```powershell
-dotnet run --project .\src\Liangwengu -f net10.0-windows10.0.17763.0
-dotnet build .\src\Liangwengu\Liangwengu.fsproj -c Release -f net10.0-windows10.0.17763.0 -r win-x64
-```
-
-macOS：
+所有开发命令封装在项目根目录 `justfile` 中（just，同名 recipe 通过 `[macos]`/`[windows]` 注解按平台自动选择，`just --list` 查看全部命令）：
 
 ```bash
-dotnet workload install macos
-dotnet run --project ./src/Liangwengu -f net10.0-macos
-dotnet build ./src/Liangwengu/Liangwengu.fsproj -c Release -f net10.0-macos
+just run              # 启动 app（按平台自动选 TFM）
+just test             # 通用测试
+just test-platform    # 平台相关测试（mac RID 按 CPU 自动推导, 与 CI 一致）
+just format           # Fantomas 格式化
+just format-check     # 与 CI 一致的格式化检查
+just smoke-test       # 系统通知 smoke test
+just publish-macos    # 打 dmg（arch 默认按当前 CPU 推导）
+just publish-windows  # 打单文件 exe（仅 Windows）
 ```
 
-单元测试：
-
-```bash
-dotnet test tests/Liangwengu.Tests/Liangwengu.Tests.fsproj -c Release
-```
+发布逻辑（mac DMG、win 单文件 exe）已内联到 justfile 的 shebang 脚本块中，`scripts/` 目录仅保留 git hooks 与 pricing-snapshot 工具，不再存在独立的 build 脚本。
 
 ## 架构约束
 

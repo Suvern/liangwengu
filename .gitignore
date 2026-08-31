@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Local process tracking (not committed)
+PROCESS.md
+
 # User-specific files
 *.rsuser
 *.suo
