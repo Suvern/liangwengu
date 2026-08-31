@@ -25,5 +25,8 @@ module NotificationTests =
 
         Assert.Contains("a &lt;title&gt; &amp; &quot;quote&quot;", xml)
         Assert.Contains("line 1 &amp; line 2", xml)
+        Assert.Contains("template=\"ToastGeneric\"", xml)
+        Assert.Contains("placement=\"appLogoOverride\"", xml)
+        Assert.Contains("Assets/app-icon.png", xml)
 
 #endif
