@@ -30,6 +30,9 @@ run:
 run:
     dotnet run --project {{ main_proj }} -f {{ win_tfm }} -r {{ win_rid }}
 
+clean:
+    dotnet clean
+
 # 通用测试 (跨平台通用 target)
 test:
     dotnet test {{ test_proj }} -f net10.0
