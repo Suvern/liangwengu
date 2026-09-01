@@ -64,10 +64,15 @@ jobs:
 
       - uses: extractions/setup-just@v3
         with:
-          just-version: latest
+          just-version: 1.58.0
 
       - name: Publish single-file exe
-        run: just publish-windows "${GITHUB_REF_NAME#v}"
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          $version = $env:RELEASE_VERSION.TrimStart('v')
+          just publish-windows $version
 
       - name: Verify single exe
         shell: pwsh
@@ -135,7 +140,7 @@ jobs:
             ${{ runner.os }}-nuget-
       - uses: extractions/setup-just@v3
         with:
-          just-version: latest
+          just-version: 1.58.0
 
       - name: Build macOS DMG
         run: just publish-macos ${{ matrix.arch }} "${GITHUB_REF_NAME#v}"
