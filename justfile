@@ -2,6 +2,9 @@
 # 安装: brew install just (macOS) / winget install Casey.Just (Windows)
 # 用法: just --list 查看全部命令; 同名 recipe 通过 [macos]/[windows] 注解按当前平台自动选择
 
+# Windows runner 默认没有 sh；PowerShell 7 是 Windows 和 GitHub Actions 的共同 shell。
+set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-Command"]
+
 main_proj := "src/Liangwengu/Liangwengu.fsproj"
 test_proj := "tests/Liangwengu.Tests/Liangwengu.Tests.fsproj"
 mac_tfm := "net10.0-macos"
@@ -20,26 +23,26 @@ default:
 # 启动 app (macOS)
 [macos]
 run:
-    dotnet run --project {{main_proj}} -f {{mac_tfm}} -r {{mac_rid}}
+    dotnet run --project {{ main_proj }} -f {{ mac_tfm }} -r {{ mac_rid }}
 
 # 启动 app (Windows)
 [windows]
 run:
-    dotnet run --project {{main_proj}} -f {{win_tfm}} -r {{win_rid}}
+    dotnet run --project {{ main_proj }} -f {{ win_tfm }} -r {{ win_rid }}
 
 # 通用测试 (跨平台通用 target)
 test:
-    dotnet test {{test_proj}} -f net10.0
+    dotnet test {{ test_proj }} -f net10.0
 
 # 平台相关测试 (macOS, RID 按当前 CPU 自动推导, 与 CI 一致)
 [macos]
 test-platform:
-    dotnet test {{test_proj}} -f {{mac_tfm}} -r {{mac_rid}}
+    dotnet test {{ test_proj }} -f {{ mac_tfm }} -r {{ mac_rid }}
 
 # 平台相关测试 (Windows, 与 CI 一致)
 [windows]
 test-platform:
-    dotnet test {{test_proj}} -f {{win_tfm}} -r {{win_rid}}
+    dotnet test {{ test_proj }} -f {{ win_tfm }} -r {{ win_rid }}
 
 # Fantomas 格式化全部 F# 代码
 format:
@@ -54,12 +57,12 @@ format-check:
 # 系统通知 smoke test (macOS; 可覆盖 RID: just smoke-test osx-x64)
 [macos]
 smoke-test rid=mac_rid:
-    dotnet run --project {{main_proj}} -f {{mac_tfm}} -r {{rid}} -- --notification-smoke-test
+    dotnet run --project {{ main_proj }} -f {{ mac_tfm }} -r {{ rid }} -- --notification-smoke-test
 
 # 系统通知 smoke test (Windows)
 [windows]
 smoke-test:
-    dotnet run --project {{main_proj}} -f {{win_tfm}} -r {{win_rid}} -- --notification-smoke-test
+    dotnet run --project {{ main_proj }} -f {{ win_tfm }} -r {{ win_rid }} -- --notification-smoke-test
 
 # 打 macOS dmg (arch/version 默认按当前 CPU 和 0.1.0; 示例: just publish-macos x64 1.0.0)
 [macos]
@@ -67,8 +70,8 @@ publish-macos arch=mac_arch version=default_version:
     #!/bin/bash
     set -e
 
-    ARCH="{{arch}}"
-    VERSION="{{version}}"
+    ARCH="{{ arch }}"
+    VERSION="{{ version }}"
     BUILD_VERSION="${VERSION%%-*}"
     PROJECT="src/Liangwengu/Liangwengu.fsproj"
     CONFIG="Release"
@@ -205,10 +208,10 @@ publish-macos arch=mac_arch version=default_version:
 # 打 Windows 单文件 exe (version 默认取 fsproj 的 0.1.0; 示例: just publish-windows 1.2.3)
 [windows]
 publish-windows version=default_version:
-    #!/usr/bin/env pwsh
+    #!pwsh
     $project = "src/Liangwengu/Liangwengu.fsproj"
     $outputDir = "artifacts/windows-x64"
-    $version = "{{version}}"
+    $version = "{{ version }}"
 
     if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
         Write-Error "dotnet is not installed or not in PATH"
@@ -231,16 +234,17 @@ publish-windows version=default_version:
     dotnet publish $project -c Release -f net10.0-windows10.0.17763.0 -r win-x64 --self-contained true --no-restore -p:Version=$version -o $outputDir
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    Get-ChildItem -LiteralPath $outputDir -Filter *.pdb -File | Remove-Item -Force
+
     $exes = @(Get-ChildItem -LiteralPath $outputDir -Filter *.exe -File)
     if ($exes.Count -ne 1 -or $exes[0].Name -ne "liangwengu.exe") {
         Write-Error "publish directory must contain only liangwengu.exe, found: $($exes.Name -join ', ')"
         exit 1
     }
-    $leftover = @(Get-ChildItem -LiteralPath $outputDir -File | Where-Object { $_.Extension -notin @('.exe', '.pdb') })
+    $leftover = @(Get-ChildItem -LiteralPath $outputDir -File | Where-Object { $_.Extension -ne '.exe' })
     if ($leftover.Count -gt 0) {
-        Write-Error "publish directory has unexpected files: $($leftover.Name -join ', ')"
+        Write-Error "publish directory has non-exe files: $($leftover.Name -join ', ')"
         exit 1
     }
-
     Write-Host "Publish complete!" -ForegroundColor Green
     Write-Host "运行方式: .\$outputDir\liangwengu.exe"

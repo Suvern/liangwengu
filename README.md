@@ -41,7 +41,7 @@
 
 去 [Release](https://github.com/Suvern/liangwengu/releases) 页面下载最新的可执行二进制程序
 
-* Windows: 下载 `liangwengu-x.y.z-win-x64.exe` 完成后双击即可运行（推荐将软件放进 `C:\Users\<user-name>]\AppData\Local\` 目录下）
+* Windows: 下载 `liangwengu-x.y.z-win-x64.exe` 后双击即可运行
 
 ## TODO
 - [x] 开机启动
@@ -65,9 +65,10 @@ Windows：
 
 ```powershell
 winget install Casey.Just
+winget install Microsoft.PowerShell
 ```
 
-> Windows 下 just 依赖 Git for Windows 自带的 `sh` 与 `pwsh`（GitHub Desktop/VS 一般已带），同名 recipe 会通过 `[macos]`/`[windows]` 注解自动选择当前平台。
+> Windows 下 recipe 使用 PowerShell 7（`pwsh`），请确认它已加入 `PATH`。同名 recipe 会通过 `[macos]`/`[windows]` 注解自动选择当前平台。
 
 macOS release/macos 目标还需要安装 workload：
 

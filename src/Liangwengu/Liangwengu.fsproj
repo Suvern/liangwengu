@@ -24,6 +24,7 @@
   <!-- Windows 特定配置 -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'">
     <DefineConstants>$(DefineConstants);WIN32</DefineConstants>
+    <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- Windows GUI 应用不显示控制台；通用目标供测试和其他桌面平台使用。 -->
@@ -79,29 +80,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Include="Assets\**" Exclude="Assets\app-icon.ico" />
     <!-- pricing.json 既是远程托管源也是编译期内嵌兜底，单一来源 -->
     <EmbeddedResource Include="..\..\pricing.json" LogicalName="liangwengu.pricing.json" />
+    <EmbeddedResource Include="Assets\app-icon.png" LogicalName="liangwengu.app-icon.png" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-macos'">
     <BundleResource Include="Assets\app-icon.png" LogicalName="app-icon.png" />
     <PartialAppManifest Include="AppIcon.plist" />
   </ItemGroup>
-
-  <!-- Windows Toast requires the app logo as a physical file. -->
-  <Target Name="CopyWindowsNotificationIcon" AfterTargets="Build"
-          Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'">
-    <MakeDir Directories="$(TargetDir)Assets" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\app-icon.png"
-          DestinationFiles="$(TargetDir)Assets\app-icon.png" />
-  </Target>
-
-  <Target Name="CopyWindowsNotificationIconToPublish" AfterTargets="Publish"
-          Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'">
-    <MakeDir Directories="$(PublishDir)Assets" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\app-icon.png"
-          DestinationFiles="$(PublishDir)Assets\app-icon.png" />
-  </Target>
 
 </Project>

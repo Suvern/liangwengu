@@ -78,14 +78,14 @@ jobs:
         shell: pwsh
         run: |
           $publishDir = "artifacts/windows-x64"
-          $exes = Get-ChildItem $publishDir -Filter *.exe
+          $exes = @(Get-ChildItem $publishDir -Filter *.exe -File)
           if ($exes.Count -ne 1 -or $exes[0].Name -ne "liangwengu.exe") {
             Write-Error "publish directory must contain only liangwengu.exe, found: $($exes.Name -join ', ')"
             exit 1
           }
-          $leftover = Get-ChildItem $publishDir | Where-Object { $_.Extension -notin @('.exe','.pdb') }
+          $leftover = @(Get-ChildItem $publishDir | Where-Object { $_.Extension -ne '.exe' })
           if ($leftover) {
-            Write-Error "publish directory has non-exe/pdb leftovers (breaks single-file contract): $($leftover.Name -join ', ')"
+            Write-Error "publish directory has non-exe leftovers (breaks single-file contract): $($leftover.Name -join ', ')"
             exit 1
           }
           Write-Host "Single-exe check passed: $($exes[0].Name), $([math]::Round($exes[0].Length/1MB,1)) MB"
