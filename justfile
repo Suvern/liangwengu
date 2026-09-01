@@ -20,12 +20,12 @@ default:
 # 启动 app (macOS)
 [macos]
 run:
-    dotnet run --project {{main_proj}} -f {{mac_tfm}}
+    dotnet run --project {{main_proj}} -f {{mac_tfm}} -r {{mac_rid}}
 
 # 启动 app (Windows)
 [windows]
 run:
-    dotnet run --project {{main_proj}} -f {{win_tfm}}
+    dotnet run --project {{main_proj}} -f {{win_tfm}} -r {{win_rid}}
 
 # 通用测试 (跨平台通用 target)
 test:
