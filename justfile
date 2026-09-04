@@ -23,7 +23,8 @@ default:
 # 启动 app (macOS)
 [macos]
 run:
-    dotnet run --project {{ main_proj }} -f {{ mac_tfm }} -r {{ mac_rid }}
+    dotnet build {{ main_proj }} -f {{ mac_tfm }} -r {{ mac_rid }}
+    dotnet exec "src/Liangwengu/bin/Debug/{{ mac_tfm }}/{{ mac_rid }}/liangwengu.dll"
 
 # 启动 app (Windows)
 [windows]
