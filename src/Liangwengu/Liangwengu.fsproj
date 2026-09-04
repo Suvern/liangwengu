@@ -7,7 +7,7 @@
     <AssemblyName>liangwengu</AssemblyName>
     <RootNamespace>Liangwengu</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 

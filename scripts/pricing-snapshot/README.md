@@ -30,7 +30,7 @@ PR 策略在 GitHub Actions yml 里根据 sync 输出的 `dataChanged` / `bumpNe
 ## 本地跑
 
 ```bash
-cd tools/pricing-snapshot
+cd scripts/pricing-snapshot
 npm install
 export DEEPSEEK_API_KEY=sk-...
 npx tsx src/sync.ts

@@ -30,18 +30,24 @@
 * 鼠标 hover 托盘图标展示当前峰谷状态 + 价格
 * 右键托盘图标查看详细状态、设置开机启动
 * 定价数据动态拉取：LLM 解析官网 → GitHub 托管 JSON → 程序每 30 min 自动更新，离线用 bundled 兜底
+* Windows Toast 和 macOS 原生通知
 
 ## Usage
 
 ### 系统要求
 
 * Windows：Windows 10 1809（build 10.0.17763）及以上
+* macOS：macOS 13.0 及以上
 
 ### 下载安装
 
 去 [Release](https://github.com/Suvern/liangwengu/releases) 页面下载最新的可执行二进制程序
 
-* Windows: 下载 `liangwengu-x.y.z-win-x64.exe` 后双击即可运行
+* Windows：下载 `liangwengu-x.y.z-win-x64.exe` 后双击即可运行
+* Apple Silicon Mac：下载 `liangwengu-x.y.z-macos-arm64.dmg`
+* Intel Mac：下载 `liangwengu-x.y.z-macos-x64.dmg`
+
+macOS 打开 DMG 后，将 `Liangwengu.app` 拖入“应用程序”文件夹再启动, 发布包使用 ad-hoc 签名、尚未进行 Apple notarization, 若 Gatekeeper 拦截，请在“系统设置 → 隐私与安全性”中允许打开该应用
 
 ## TODO
 - [x] 开机启动
@@ -68,7 +74,7 @@ winget install Casey.Just
 winget install Microsoft.PowerShell
 ```
 
-> Windows 下 recipe 使用 PowerShell 7（`pwsh`），请确认它已加入 `PATH`。同名 recipe 会通过 `[macos]`/`[windows]` 注解自动选择当前平台。
+> Windows 下 recipe 使用 PowerShell 7（`pwsh`），请确认它已加入 `PATH`, 同名 recipe 会通过 `[macos]`/`[windows]` 注解自动选择当前平台
 
 macOS release/macos 目标还需要安装 workload：
 
@@ -108,7 +114,7 @@ just test-platform
 just smoke-test
 ```
 
-Windows 和 macOS 都需要允许应用发送通知。`Notification submitted successfully.` 只表示系统已接受请求，通知是否可见还取决于系统权限和勿扰模式。
+Windows 和 macOS 都需要允许应用发送通知,`Notification submitted successfully.` 只表示系统已接受请求，通知是否可见还取决于系统权限和勿扰模式
 
 ### 代码格式化
 
@@ -133,22 +139,18 @@ just format-check
 
 ### 打包（发布）
 
-**macOS:**
+**macOS：**
 > 产物位于: artifacts/macos-arm64/liangwengu-<version>-macos-arm64.dmg（Intel 则 macos-x64）
 ```bash
-just publish-macos [arch] [version]    # 默认按当前 CPU 推导，version 默认 0.1.0
+just publish-macos [arch] [version]    # 默认按当前 CPU 推导，version 默认 0.2.0
 ```
 
-**Windows:**
+**Windows：**
 
 > 产物位于: artifacts\windows-x64\liangwengu.exe
 ```powershell
 just publish-windows
 ```
-
-macOS 发布包当前使用 ad-hoc 签名，适合通过 GitHub 分发和测试，但未进行 Apple notarization
-
-首次打开时若被 Gatekeeper 拦截，请在“系统设置 → 隐私与安全性”中允许打开该应用
 
 ## License
 [MIT](LICENSE)

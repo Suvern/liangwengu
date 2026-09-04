@@ -21,16 +21,13 @@ Liangwengu 是一个使用 F# 和 Avalonia.FuncUI 编写的跨平台系统托盘
 
 ## 代码边界
 
-- `src/Liangwengu/Domain.fs`：峰谷规则和展示文案等纯领域逻辑
-- `src/Liangwengu/PricingSchema.fs`：定价 JSON 类型、解析和校验
-- `src/Liangwengu/PricingFetcher.fs`：远程、本地缓存和 bundled 定价数据
-- `src/Liangwengu/PricingService.CrossPlatform.fs`：定价刷新协调
-- `src/Liangwengu/App.fs`：Avalonia 生命周期和托盘 UI 编排
-- `src/Liangwengu/Autostart.fs`：平台开机启动实现
-- `src/Liangwengu/Notify.Windows.fs`：Windows Toast 实现
-- `src/Liangwengu/Notify.Mac.fs`：macOS 通知实现
-- `src/Liangwengu/Native.fs`：平台原生 API 声明
-- `tests/Liangwengu.Tests/`：领域逻辑和 Schema 单元测试
+- `src/Liangwengu/Domain/`：峰谷规则、展示文案和定价 JSON 类型、解析、校验等纯领域逻辑
+- `src/Liangwengu/Infrastructure/PricingFetcher.fs`：远程、本地缓存和 bundled 定价数据
+- `src/Liangwengu/Application/`：定价刷新协调和失败状态管理
+- `src/Liangwengu/Platform/`：单实例、开机启动、原生通知和平台 API 声明
+- `src/Liangwengu/Presentation/`：托盘菜单、视图和应用编排
+- `src/Liangwengu/App.fs` / `Program.fs`：Avalonia 生命周期和程序入口
+- `tests/Liangwengu.Tests/`：领域、定价 schema、刷新状态和通知测试
 - `scripts/pricing-snapshot/`：独立的定价数据生成工具，不属于运行时业务代码
 
 ## 构建与测试
@@ -39,6 +36,7 @@ Liangwengu 是一个使用 F# 和 Avalonia.FuncUI 编写的跨平台系统托盘
 
 ```bash
 just run              # 启动 app（按平台自动选 TFM）
+just clean            # 清理构建输出
 just test             # 通用测试
 just test-platform    # 平台相关测试（mac RID 按 CPU 自动推导, 与 CI 一致）
 just format           # Fantomas 格式化
