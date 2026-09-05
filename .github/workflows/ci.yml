@@ -25,9 +25,9 @@ jobs:
             rid: osx-x64
             framework: net10.0-macos
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -35,15 +35,16 @@ jobs:
         if: startsWith(matrix.framework, 'net10.0-macos')
         run: dotnet workload install macos
 
-      - uses: extractions/setup-just@v3
+      - uses: extractions/setup-crate@v2
         with:
-          just-version: 1.58.0
+          repo: casey/just
+          version: 1.58.0
 
       - name: Check F# formatting
         run: just format-check
 
       - name: Cache NuGet
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.fsproj', '**/*.props', '**/*.targets') }}
@@ -71,7 +72,7 @@ jobs:
 
       - name: Upload dev exe (PR preview)
         if: github.event_name == 'pull_request' && matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: liangwengu-pr-${{ github.event.pull_request.number }}
           path: artifacts/windows-x64/liangwengu.exe

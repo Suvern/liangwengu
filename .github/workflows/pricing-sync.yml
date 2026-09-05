@@ -19,9 +19,9 @@ jobs:
       run:
         working-directory: scripts/pricing-snapshot
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -45,7 +45,7 @@ jobs:
       # 数据变更或需要 schema 升级 → 提 PR（人审）
       - name: Create PR — schema bump
         if: steps.r.outputs.bumpNeeded == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: 'feat(pricing): schema bump needed'
           title: 'pricing: schema bump needed (v1 → v2?)'
@@ -61,7 +61,7 @@ jobs:
 
       - name: Create PR — data update
         if: steps.r.outputs.dataChanged == 'true' && steps.r.outputs.bumpNeeded != 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: 'chore(pricing): update pricing snapshot'
           title: 'pricing: 定价数据更新'
