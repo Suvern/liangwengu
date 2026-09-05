@@ -232,7 +232,7 @@ publish-windows version=default_version:
         Remove-Item -LiteralPath $outputDir -Recurse -Force
     }
 
-    dotnet restore $project -r win-x64 -p:TargetFramework=net10.0-windows10.0.17763.0
+    dotnet restore $project -r win-x64 -p:TargetFramework=net10.0-windows10.0.17763.0 -p:Configuration=Release
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     dotnet publish $project -c Release -f net10.0-windows10.0.17763.0 -r win-x64 --self-contained true --no-restore -p:Version=$version -o $outputDir
