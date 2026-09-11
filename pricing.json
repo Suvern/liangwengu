@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceHash": "sha256:3b2d26ad11d876ebac9d60513a861db6c6560e01b6662524b551ab97a9067463",
+  "sourceHash": "sha256:aef5471fda3eb4fb726396ae3f34a09eaaf447cb106792dc351bed7d1cb2de60",
   "currency": "CNY",
   "peakPolicy": {
     "weekdaysOnly": true,
@@ -17,17 +17,17 @@
   },
   "models": [
     {
-      "modelId": "deepseek-v4-flash",
+      "modelId": "deepseek-flash",
       "displayName": "Flash",
       "peak": {
-        "inputCacheHit": 0.1,
-        "inputCacheMiss": 3,
-        "output": 9
+        "inputCacheHit": 0.04,
+        "inputCacheMiss": 2,
+        "output": 8
       },
       "offPeak": {
-        "inputCacheHit": 0.05,
-        "inputCacheMiss": 1.5,
-        "output": 4.5
+        "inputCacheHit": 0.02,
+        "inputCacheMiss": 1,
+        "output": 4
       }
     },
     {
@@ -42,20 +42,6 @@
         "inputCacheHit": 0.15,
         "inputCacheMiss": 4.5,
         "output": 13.5
-      }
-    },
-    {
-      "modelId": "deepseek-v4-flash-vision-exp",
-      "displayName": "Flash Vision",
-      "peak": {
-        "inputCacheHit": 0.1,
-        "inputCacheMiss": 3,
-        "output": 9
-      },
-      "offPeak": {
-        "inputCacheHit": 0.05,
-        "inputCacheMiss": 1.5,
-        "output": 4.5
       }
     }
   ]
