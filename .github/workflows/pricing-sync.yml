@@ -73,8 +73,11 @@ jobs:
           labels: pricing-data
 
       # 仅 sourceHash 变（HTML 变了但提取数据没变）→ 直接 push
+      # working-directory: ./ 覆盖 job-level 的 scripts/pricing-snapshot，
+      # 否则 git add pricing.json 会因 cwd 不对找不到根目录下的 pricing.json
       - name: Auto-commit metadata-only change
         if: steps.r.outputs.hashChanged == 'true' && steps.r.outputs.dataChanged != 'true' && steps.r.outputs.bumpNeeded != 'true'
+        working-directory: ./
         run: |
           git config user.name  github-actions[bot]
           git config user.email github-actions@noreply
