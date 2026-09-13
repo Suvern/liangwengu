@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceHash": "sha256:aef5471fda3eb4fb726396ae3f34a09eaaf447cb106792dc351bed7d1cb2de60",
+  "sourceHash": "sha256:7ae8c1fe33b1d9953e0c6bf8625c8d13c0db30913847aca1c23f558dd20ef4cd",
   "currency": "CNY",
   "peakPolicy": {
     "weekdaysOnly": true,
