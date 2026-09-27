@@ -30,15 +30,19 @@ module TrayView =
         (view: TrayView)
         (menu: TrayMenu)
         (snapshot: PricingSnapshot)
-        (utc: DateTime)
+        (instant: DateTimeOffset)
         (currentPeriod: Period option)
         =
-        let period = Domain.periodOf snapshot.PeakPolicy utc
-        let _, switchAt = Domain.nextSwitch snapshot.PeakPolicy utc
-        let remaining = switchAt - utc
+        let period = Domain.periodOf snapshot.PeakPolicy instant
 
-        view.Icon.ToolTipText <- Domain.tooltip period remaining snapshot.Models
-        menu.Status.Header <- Domain.statusLine period remaining
+        match Domain.nextSwitch snapshot.PeakPolicy instant with
+        | Some(_, switchAt) ->
+            let remaining = switchAt - instant
+            view.Icon.ToolTipText <- Domain.tooltip period remaining snapshot.Models
+            menu.Status.Header <- Domain.statusLine period remaining
+        | None ->
+            view.Icon.ToolTipText <- Domain.tooltipWithoutSwitch period snapshot.Models
+            menu.Status.Header <- Domain.statusLineWithoutSwitch period
 
         List.zip menu.Models snapshot.Models
         |> List.iter (fun (item, model) -> item.Header <- Domain.inputLine period model)
@@ -47,6 +51,7 @@ module TrayView =
             view.Icon.Icon <-
                 (match period with
                  | Peak -> view.PeakIcon
-                 | OffPeak -> view.ValleyIcon)
+                 | OffPeak -> view.ValleyIcon
+                 | Unknown -> view.Icon.Icon)
 
         period

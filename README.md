@@ -30,6 +30,7 @@
 * 鼠标 hover 托盘图标展示当前峰谷状态 + 价格
 * 右键托盘图标查看详细状态、设置开机启动
 * 定价数据动态拉取：LLM 解析官网 → GitHub 托管 JSON → 程序每 30 min 自动更新，离线用 bundled 兜底
+* 峰谷时段按北京时间计算，工作日法定节假日全天按空闲价格；假日日历随定价快照分发
 * Windows Toast 和 macOS 原生通知
 
 ## Usage
@@ -142,7 +143,7 @@ just format-check
 **macOS：**
 > 产物位于: artifacts/macos-arm64/liangwengu-<version>-macos-arm64.dmg（Intel 则 macos-x64）
 ```bash
-just publish-macos [arch] [version]    # 默认按当前 CPU 推导，version 默认 0.2.0
+just publish-macos [arch] [version]    # 默认按当前 CPU 推导，version 默认 0.3.0
 ```
 
 **Windows：**

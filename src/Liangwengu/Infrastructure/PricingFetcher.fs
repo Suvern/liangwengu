@@ -62,7 +62,7 @@ module PricingFetcher =
             if not (Directory.Exists(dir)) then
                 Directory.CreateDirectory(dir) |> ignore
 
-            File.WriteAllText(localCachePath, System.Text.Json.JsonSerializer.Serialize(snap))
+            File.WriteAllText(localCachePath, PricingSchema.serialize snap)
         with ex ->
             Console.Error.WriteLine($"[{DateTimeOffset.Now:O}] Saving local pricing cache failed: {ex}")
 

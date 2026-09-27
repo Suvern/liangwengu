@@ -10,7 +10,7 @@ test_proj := "tests/Liangwengu.Tests/Liangwengu.Tests.fsproj"
 mac_tfm := "net10.0-macos"
 win_tfm := "net10.0-windows10.0.17763.0"
 win_rid := "win-x64"
-default_version := "0.2.0"
+default_version := "0.3.0"
 
 # 按当前机器 CPU 自动推导 mac 参数 (Apple Silicon -> arm64/osx-arm64; Intel -> x64/osx-x64)
 mac_arch := if arch() == "aarch64" { "arm64" } else { "x64" }
@@ -68,7 +68,7 @@ smoke-test rid=mac_rid:
 smoke-test:
     dotnet run --project {{ main_proj }} -f {{ win_tfm }} -r {{ win_rid }} -- --notification-smoke-test
 
-# 打 macOS dmg (arch/version 默认按当前 CPU 和 0.1.0; 示例: just publish-macos x64 1.0.0)
+# 打 macOS dmg (arch/version 默认按当前 CPU 和 0.3.0; 示例: just publish-macos x64 1.0.0)
 [macos]
 publish-macos arch=mac_arch version=default_version:
     #!/bin/bash
@@ -209,7 +209,7 @@ publish-macos arch=mac_arch version=default_version:
     echo "DMG:"
     echo "  $DMG_PATH"
 
-# 打 Windows 单文件 exe (version 默认取 fsproj 的 0.1.0; 示例: just publish-windows 1.2.3)
+# 打 Windows 单文件 exe (version 默认 0.3.0; 示例: just publish-windows 1.2.3)
 [windows]
 publish-windows version=default_version:
     #!pwsh

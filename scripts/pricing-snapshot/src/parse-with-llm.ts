@@ -1,12 +1,12 @@
 #!/usr/bin/env tsx
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-import { TEMPLATE_V1, PRICING_URL, type LlmRawOutput } from "./common.js";
+import { TEMPLATE_V2, PRICING_URL, type LlmRawOutput } from "./common.js";
 
 const isMain = import.meta.url === pathToFileURL(process.argv[1]).href;
 
 const API_BASE = "https://api.deepseek.com";
-const MODEL = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+const MODEL = process.env.DEEPSEEK_MODEL ?? "deepseek-flash";
 const MAX_RETRIES = 3;
 
 async function callDeepSeek(system: string, user: string): Promise<string> {
@@ -28,7 +28,7 @@ async function callDeepSeek(system: string, user: string): Promise<string> {
 }
 
 export async function parsePricingHtml(html: string): Promise<LlmRawOutput> {
-  const system = readFileSync(TEMPLATE_V1, "utf8");
+  const system = readFileSync(TEMPLATE_V2, "utf8");
   const user = `解析以下 DeepSeek 定价页 HTML，按 schema 输出 JSON。\n\nURL: ${PRICING_URL}\n\nHTML:\n${html}\n`;
 
   let lastErr: unknown;
@@ -37,11 +37,11 @@ export async function parsePricingHtml(html: string): Promise<LlmRawOutput> {
       const content = await callDeepSeek(system, user);
       let s = content.trim();
       if (s.startsWith("```")) s = s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
-      console.error(`info: parse succeeded on attempt ${i}`);
+      console.log(`info: parse succeeded on attempt ${i}`);
       return JSON.parse(s) as LlmRawOutput;
     } catch (e) {
       lastErr = e;
-      console.error(`warn: attempt ${i}/${MAX_RETRIES} failed: ${(e as Error).message}`);
+      console.warn(`warn: attempt ${i}/${MAX_RETRIES} failed: ${(e as Error).message}`);
     }
   }
   throw new Error(`all ${MAX_RETRIES} attempts failed: ${(lastErr as Error)?.message}`);

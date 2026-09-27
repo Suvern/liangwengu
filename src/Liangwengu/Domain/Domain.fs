@@ -6,22 +6,58 @@ open System
 type Period =
     | Peak
     | OffPeak
+    | Unknown
 
 module Domain =
 
-    // 峰谷策略来自 PricingSnapshot.PeakPolicy（运行时由拉取/bundled 提供）。
-    // timezone 固定 UTC：官方英文版直接以 UTC 表述，DateTime.UtcNow 直读，零时区转换。
+    let private policyTimeZone (policy: PeakPolicy) =
+        match policy.Timezone with
+        | "UTC" -> TimeZoneInfo.Utc
+        | "Asia/Shanghai" ->
+            try
+                TimeZoneInfo.FindSystemTimeZoneById("Asia/Shanghai")
+            with :? TimeZoneNotFoundException ->
+                TimeZoneInfo.FindSystemTimeZoneById("China Standard Time")
+        | timezone -> invalidArg "policy" $"unsupported policy timezone: %s{timezone}"
 
-    /// UTC 时间 + 峰谷策略 -> 当前计费时段
-    /// weekdaysOnly=true 时，周六日整天为 OffPeak。
-    let periodOf (policy: PeakPolicy) (utc: DateTime) : Period =
-        if
-            policy.WeekdaysOnly
-            && (utc.DayOfWeek = DayOfWeek.Saturday || utc.DayOfWeek = DayOfWeek.Sunday)
-        then
+    let private isWeekend (date: DateTime) =
+        date.DayOfWeek = DayOfWeek.Saturday || date.DayOfWeek = DayOfWeek.Sunday
+
+    let private isHoliday (policy: PeakPolicy) (localDate: DateTime) =
+        match policy.HolidayCalendar with
+        | None -> false
+        | Some calendar ->
+            let date =
+                localDate.ToString("yyyy-MM-dd", Globalization.CultureInfo.InvariantCulture)
+
+            calendar.ExcludedDates |> List.contains date
+
+    let private calendarCovers (policy: PeakPolicy) (localDate: DateTime) =
+        match policy.HolidayCalendar with
+        | None -> true
+        | Some calendar ->
+            let date =
+                localDate.ToString("yyyy-MM-dd", Globalization.CultureInfo.InvariantCulture)
+
+            date >= calendar.CoveredFrom && date <= calendar.CoveredThrough
+
+    let private isPeakDay (policy: PeakPolicy) (localDate: DateTime) =
+        (not policy.WeekdaysOnly || not (isWeekend localDate))
+        && not (isHoliday policy localDate)
+
+    let private toPolicyTime (policy: PeakPolicy) (instant: DateTimeOffset) =
+        TimeZoneInfo.ConvertTime(instant, policyTimeZone policy)
+
+    /// 绝对时刻 + 峰谷策略 -> 当前计费时段。窗口和星期按策略时区解释。
+    let periodOf (policy: PeakPolicy) (instant: DateTimeOffset) : Period =
+        let local = toPolicyTime policy instant
+
+        if not (calendarCovers policy local.DateTime) then
+            Unknown
+        elif not (isPeakDay policy local.DateTime) then
             OffPeak
         else
-            let mins = utc.Hour * 60 + utc.Minute
+            let mins = local.Hour * 60 + local.Minute
 
             policy.Windows
             |> List.exists (fun w -> mins >= PricingSchema.parseHHmm w.Start && mins < PricingSchema.parseHHmm w.End)
@@ -29,46 +65,55 @@ module Domain =
                 | true -> Peak
                 | false -> OffPeak
 
-    /// UTC 时间 + 峰谷策略 -> 下一次切换的时刻（UTC）与切换后的时段
-    /// weekdaysOnly=true 时，周五 10:00 后的下一个切换是周一 01:00（跳过整个周末）。
-    let nextSwitch (policy: PeakPolicy) (utc: DateTime) : Period * DateTime =
-        let isWeekday (d: DateTime) =
-            not policy.WeekdaysOnly
-            || (d.DayOfWeek <> DayOfWeek.Saturday && d.DayOfWeek <> DayOfWeek.Sunday)
+    let private localBoundaryToUtc (timezone: TimeZoneInfo) (date: DateTime) (minute: int) =
+        let local =
+            DateTime.SpecifyKind(date.Date.AddMinutes(float minute), DateTimeKind.Unspecified)
 
-        // 给定一个日期（0:00），按 windows 生成当日所有边界（升序），过滤出 > utc 的第一个
+        DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(local, timezone), TimeSpan.Zero)
+
+    /// 绝对时刻 + 峰谷策略 -> 覆盖范围内下一次切换的 UTC 绝对时刻与切换后的时段。
+    /// 若当前日历已过期或覆盖范围内没有下一次切换，则返回 None。
+    let nextSwitch (policy: PeakPolicy) (instant: DateTimeOffset) : (Period * DateTimeOffset) option =
+        let timezone = policyTimeZone policy
+        let localNow = TimeZoneInfo.ConvertTime(instant, timezone)
+
         let firstBoundaryAfter (date: DateTime) =
             policy.Windows
             |> List.collect (fun w ->
-                [ date.AddMinutes(float (PricingSchema.parseHHmm w.Start)), Peak
-                  date.AddMinutes(float (PricingSchema.parseHHmm w.End)), OffPeak ])
+                [ localBoundaryToUtc timezone date (PricingSchema.parseHHmm w.Start), Peak
+                  localBoundaryToUtc timezone date (PricingSchema.parseHHmm w.End), OffPeak ])
             |> List.sortBy fst
-            |> List.tryFind (fun (t, _) -> t > utc)
+            |> List.tryFind (fun (t, _) -> t > instant.ToUniversalTime())
 
         let rec loop (date: DateTime) =
-            if isWeekday date then
+            if not (calendarCovers policy date) then
+                None
+            elif isPeakDay policy date then
                 match firstBoundaryAfter date with
-                | Some(t, p) -> p, t
+                | Some(t, p) -> Some(p, t)
                 | None -> loop (date.AddDays 1.0)
             else
                 loop (date.AddDays 1.0)
 
-        loop utc.Date
+        loop localNow.Date
 
     let periodEmoji (p: Period) =
         match p with
         | Peak -> "😈"
         | OffPeak -> "😊"
+        | Unknown -> "⚠️"
 
     let periodLabel (p: Period) =
         match p with
         | Peak -> "峰"
         | OffPeak -> "谷"
+        | Unknown -> "未知"
 
     let private pricesOf (p: Period) (m: ModelPrices) =
         match p with
         | Peak -> m.Peak
         | OffPeak -> m.OffPeak
+        | Unknown -> invalidArg "p" "prices are unavailable when the holiday calendar is out of coverage"
 
     let fmtPrice (d: decimal) : string = d.ToString("0.00")
 
@@ -84,24 +129,52 @@ module Domain =
             match p with
             | Peak -> "谷"
             | OffPeak -> "峰"
+            | Unknown -> "切换"
 
         $"距%s{nextLabel}还有 %s{formatCountdown remaining}"
 
     /// 状态行: "😈 峰 · 距谷还有 1h23m"
     let statusLine (p: Period) (remaining: TimeSpan) : string =
-        $"%s{periodEmoji p} %s{periodLabel p} · %s{countdownPart p remaining}"
+        match p with
+        | Unknown -> "⚠️ 峰谷未知 · 假日日历待更新"
+        | _ -> $"%s{periodEmoji p} %s{periodLabel p} · %s{countdownPart p remaining}"
+
+    let statusLineWithoutSwitch (p: Period) : string =
+        match p with
+        | Unknown -> "⚠️ 峰谷未知 · 假日日历待更新"
+        | _ -> $"%s{periodEmoji p} %s{periodLabel p} · 下次切换待更新"
 
     /// 模型输入价格行: "Flash 输入 未命中¥3.00 命中¥0.10"
     let inputLine (p: Period) (m: ModelPrices) : string =
-        let pr = pricesOf p m
-        $"%s{m.DisplayName} 输入 未命中¥%s{fmtPrice pr.InputCacheMiss} 命中¥%s{fmtPrice pr.InputCacheHit}"
+        match p with
+        | Unknown -> $"%s{m.DisplayName} 输入 价格未知"
+        | _ ->
+            let pr = pricesOf p m
+            $"%s{m.DisplayName} 输入 未命中¥%s{fmtPrice pr.InputCacheMiss} 命中¥%s{fmtPrice pr.InputCacheHit}"
 
     /// Tooltip 单行: 梁文"峰"😈 |  距谷还有 1h23m | Flash输出¥9.00 Pro输出¥27.00 /M
     /// 峰谷随时段切换名字玩梗（梁文峰/梁文谷）
-    let tooltip (p: Period) (remaining: TimeSpan) (models: ModelPrices list) : string =
+    let private tooltipWithCountdown (p: Period) (remaining: TimeSpan) (models: ModelPrices list) : string =
         let pricePart =
             models
             |> List.map (fun m -> $"%s{m.DisplayName}输出¥%s{fmtPrice (pricesOf p m).Output}")
             |> String.concat " "
 
         $"梁文\u201C{periodLabel p}\u201D{periodEmoji p} |  {countdownPart p remaining} | {pricePart} /M"
+
+    let tooltip (p: Period) (remaining: TimeSpan) (models: ModelPrices list) : string =
+        if p = Unknown then
+            "假日日历已超出覆盖范围，当前峰谷状态和价格未知"
+        else
+            tooltipWithCountdown p remaining models
+
+    let tooltipWithoutSwitch (p: Period) (models: ModelPrices list) : string =
+        if p = Unknown then
+            "假日日历已超出覆盖范围，当前峰谷状态和价格未知"
+        else
+            let pricePart =
+                models
+                |> List.map (fun m -> $"%s{m.DisplayName}输出¥%s{fmtPrice (pricesOf p m).Output}")
+                |> String.concat " "
+
+            $"梁文\u201C{periodLabel p}\u201D{periodEmoji p} |  下次切换待更新 | {pricePart} /M"

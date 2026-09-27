@@ -9,7 +9,8 @@ const __dirname = path.dirname(__filename);
 export const ROOT = path.resolve(__dirname, "..", "..", "..");
 export const PRICING_JSON = path.join(ROOT, "pricing.json");
 export const SCHEMA_V1 = path.join(__dirname, "..", "schema-v1.json");
-export const TEMPLATE_V1 = path.join(__dirname, "..", "schema-v1-template.md");
+export const SCHEMA_V2 = path.join(__dirname, "..", "schema-v2.json");
+export const TEMPLATE_V2 = path.join(__dirname, "..", "schema-v2-template.md");
 
 export const PRICING_URL =
   "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/";
@@ -32,9 +33,17 @@ export interface TimeWindow {
   end: string;
 }
 
+export interface HolidayCalendar {
+  coveredFrom: string;
+  coveredThrough: string;
+  excludedDates: string[];
+}
+
 export interface PeakPolicy {
+  timezone: "Asia/Shanghai";
   weekdaysOnly: boolean;
   windows: TimeWindow[];
+  holidayCalendar: HolidayCalendar;
 }
 
 export interface PricingSnapshot {
@@ -45,7 +54,8 @@ export interface PricingSnapshot {
   models: ModelPrices[];
 }
 
-export interface LlmRawOutput extends Omit<PricingSnapshot, "sourceHash"> {
+export interface LlmRawOutput extends Omit<PricingSnapshot, "sourceHash" | "peakPolicy"> {
+  peakPolicy: Omit<PeakPolicy, "holidayCalendar">;
   schemaBumpNeeded?: boolean;
   schemaBumpReason?: string;
 }

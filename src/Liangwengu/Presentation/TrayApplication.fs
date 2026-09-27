@@ -15,7 +15,9 @@ module TrayApplication =
         let view = TrayView.create menu
 
         let refresh () =
-            let period = TrayView.update view menu activeSnapshot DateTime.UtcNow currentPeriod
+            let period =
+                TrayView.update view menu activeSnapshot DateTimeOffset.UtcNow currentPeriod
+
             currentPeriod <- Some period
 
         let timer = DispatcherTimer()
