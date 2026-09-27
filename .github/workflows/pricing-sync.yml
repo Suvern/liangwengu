@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   sync:
@@ -25,39 +26,55 @@ jobs:
         with:
           node-version: '22'
 
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
 
       - name: Run sync
+        id: r
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        run: npx tsx src/sync.ts > /tmp/result.json 2>> "$GITHUB_STEP_SUMMARY"
+        run: npx tsx src/sync.ts >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Read result
-        id: r
-        run: |
-          {
-            echo "hashChanged=$(jq -r .hashChanged /tmp/result.json)"
-            echo "dataChanged=$(jq -r .dataChanged /tmp/result.json)"
-            echo "bumpNeeded=$(jq -r .bumpNeeded /tmp/result.json)"
-            echo "bumpReason=$(jq -r .bumpReason /tmp/result.json)"
-          } >> "$GITHUB_OUTPUT"
-
-      # 数据变更或需要 schema 升级 → 提 PR（人审）
-      - name: Create PR — schema bump
+      # 新规则超出 schema 能力时，不提交不完整 pricing.json；创建一次待处理 Issue。
+      - name: Create issue — schema bump
         if: steps.r.outputs.bumpNeeded == 'true'
-        uses: peter-evans/create-pull-request@v8
+        uses: actions/github-script@v7
+        env:
+          BUMP_REASON: ${{ steps.r.outputs.bumpReason }}
         with:
-          commit-message: 'feat(pricing): schema bump needed'
-          title: 'pricing: schema bump needed (v1 → v2?)'
-          body: |
-            LLM 检测到当前 v1 schema 无法表达定价页的变化：
-
-            > ${{ steps.r.outputs.bumpReason }}
-
-            请人工确认后升级 schema 并发版。
-          branch: pricing-sync
-          add-paths: pricing.json
-          labels: schema-bump
+          script: |
+            const title = 'pricing: schema bump needed';
+            const { owner, repo } = context.repo;
+            const { data: labels } = await github.rest.issues.listLabelsForRepo({ owner, repo, per_page: 100 });
+            if (!labels.some((label) => label.name === 'schema-bump')) {
+              await github.rest.issues.createLabel({ owner, repo, name: 'schema-bump', color: 'd93f0b' });
+            }
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              labels: 'schema-bump',
+              per_page: 100,
+            });
+            const existing = openIssues.find((issue) => !issue.pull_request && issue.title === title);
+            if (existing) {
+              core.info(`Schema bump is already tracked in #${existing.number}.`);
+            } else {
+              const body = [
+                'The pricing page contains information the current snapshot schema cannot represent.',
+                '',
+                `> ${process.env.BUMP_REASON || 'No reason was provided by the parser.'}`,
+                '',
+                'Review the source change, update the schema and app reader, then publish a compatible app before switching `pricing.json`.',
+              ].join('\n');
+              const { data: created } = await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+                labels: ['schema-bump'],
+              });
+              core.info(`Created schema bump issue #${created.number}.`);
+            }
 
       - name: Create PR — data update
         if: steps.r.outputs.dataChanged == 'true' && steps.r.outputs.bumpNeeded != 'true'
@@ -66,8 +83,10 @@ jobs:
           commit-message: 'chore(pricing): update pricing snapshot'
           title: 'pricing: 定价数据更新'
           body: |
-            DeepSeek 定价页内容变化，已用 LLM 重新解析。
-            请审核 JSON 变更后合并。
+            定价快照发生变化。请审核价格、峰时规则及内嵌节假日日期后合并。
+
+            - Pricing page changed: `${{ steps.r.outputs.hashChanged }}`
+            - Holiday calendar changed: `${{ steps.r.outputs.calendarChanged }}`
           branch: pricing-sync
           add-paths: pricing.json
           labels: pricing-data

@@ -6,8 +6,27 @@ open Xunit
 
 // 官方英文版: Peak = 01:00-04:00 / 06:00-10:00 UTC，周一至周五；其余空闲
 let policy: PeakPolicy =
-    { WeekdaysOnly = true
-      Windows = [ { Start = "01:00"; End = "04:00" }; { Start = "06:00"; End = "10:00" } ] }
+    { Timezone = "UTC"
+      WeekdaysOnly = true
+      Windows = [ { Start = "01:00"; End = "04:00" }; { Start = "06:00"; End = "10:00" } ]
+      HolidayCalendar = None }
+
+let policyChina: PeakPolicy =
+    { Timezone = "Asia/Shanghai"
+      WeekdaysOnly = true
+      Windows = [ { Start = "09:00"; End = "12:00" }; { Start = "14:00"; End = "18:00" } ]
+      HolidayCalendar =
+        Some
+            { CoveredFrom = "2026-01-01"
+              CoveredThrough = "2026-12-31"
+              ExcludedDates =
+                [ "2026-10-01"
+                  "2026-10-02"
+                  "2026-10-03"
+                  "2026-10-04"
+                  "2026-10-05"
+                  "2026-10-06"
+                  "2026-10-07" ] } }
 
 // weekdaysOnly=false 的对照策略（旧规则：每天峰谷）
 let policyEveryDay: PeakPolicy = { policy with WeekdaysOnly = false }
@@ -36,11 +55,16 @@ let testModels: ModelPrices list =
             Output = 13.5m } } ]
 
 // 2026-08-18 是周二（工作日）；周末用 08-22(六)/08-23(日)/08-24(一)
-let utc (h: int) (m: int) : DateTime =
-    DateTime(2026, 8, 18, h, m, 0, DateTimeKind.Utc)
+let utc (h: int) (m: int) : DateTimeOffset =
+    DateTimeOffset(DateTime(2026, 8, 18, h, m, 0, DateTimeKind.Utc))
 
-let utcOn (month: int) (day: int) (h: int) (m: int) : DateTime =
-    DateTime(2026, month, day, h, m, 0, DateTimeKind.Utc)
+let utcOn (month: int) (day: int) (h: int) (m: int) : DateTimeOffset =
+    DateTimeOffset(DateTime(2026, month, day, h, m, 0, DateTimeKind.Utc))
+
+let nextSwitchOrFail policy instant =
+    match Domain.nextSwitch policy instant with
+    | Some result -> result
+    | None -> failwith "expected a future switch within the calendar coverage"
 
 // ------ periodOf ------
 
@@ -80,64 +104,93 @@ let ``periodOf weekdaysOnly=false 时周末仍判峰`` () =
 
 [<Fact>]
 let ``nextSwitch 0:59 后 1:00 转峰`` () =
-    let p, t = Domain.nextSwitch policy (utc 0 59)
+    let p, t = nextSwitchOrFail policy (utc 0 59)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 1, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 18, 1, 0, 0, DateTimeKind.Utc)), t)
 
 [<Fact>]
 let ``nextSwitch 1:00 后 4:00 转谷`` () =
-    let p, t = Domain.nextSwitch policy (utc 1 0)
+    let p, t = nextSwitchOrFail policy (utc 1 0)
     Assert.Equal(OffPeak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 4, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 18, 4, 0, 0, DateTimeKind.Utc)), t)
 
 [<Fact>]
 let ``nextSwitch 3:59 后 4:00 转谷`` () =
-    let p, t = Domain.nextSwitch policy (utc 3 59)
+    let p, t = nextSwitchOrFail policy (utc 3 59)
     Assert.Equal(OffPeak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 4, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 18, 4, 0, 0, DateTimeKind.Utc)), t)
 
 [<Fact>]
 let ``nextSwitch 4:00 后 6:00 转峰`` () =
-    let p, t = Domain.nextSwitch policy (utc 4 0)
+    let p, t = nextSwitchOrFail policy (utc 4 0)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 6, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 18, 6, 0, 0, DateTimeKind.Utc)), t)
 
 [<Fact>]
 let ``nextSwitch 6:00 后 10:00 转谷`` () =
-    let p, t = Domain.nextSwitch policy (utc 6 0)
+    let p, t = nextSwitchOrFail policy (utc 6 0)
     Assert.Equal(OffPeak, p)
-    Assert.Equal(DateTime(2026, 8, 18, 10, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 18, 10, 0, 0, DateTimeKind.Utc)), t)
 
 [<Fact>]
 let ``nextSwitch 10:00 后次日 1:00 转峰`` () =
-    let p, t = Domain.nextSwitch policy (utc 10 0)
+    let p, t = nextSwitchOrFail policy (utc 10 0)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 19, 1, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 19, 1, 0, 0, DateTimeKind.Utc)), t)
 
 [<Fact>]
 let ``nextSwitch 23:00 后次日 1:00 转峰`` () =
-    let p, t = Domain.nextSwitch policy (utc 23 0)
+    let p, t = nextSwitchOrFail policy (utc 23 0)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 19, 1, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 19, 1, 0, 0, DateTimeKind.Utc)), t)
 
 [<Fact>]
 let ``nextSwitch 周五 10:00 后跳到周一 01:00 转峰`` () =
     // 2026-08-21 周五 10:00 UTC → 下一切换是周一 08-24 01:00
-    let p, t = Domain.nextSwitch policy (utcOn 8 21 10 0)
+    let p, t = nextSwitchOrFail policy (utcOn 8 21 10 0)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 24, 1, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 24, 1, 0, 0, DateTimeKind.Utc)), t)
 
 [<Fact>]
 let ``nextSwitch 周六任意时刻跳到周一 01:00 转峰`` () =
-    let p, t = Domain.nextSwitch policy (utcOn 8 22 12 0)
+    let p, t = nextSwitchOrFail policy (utcOn 8 22 12 0)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 24, 1, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 24, 1, 0, 0, DateTimeKind.Utc)), t)
 
 [<Fact>]
 let ``nextSwitch 周日任意时刻跳到周一 01:00 转峰`` () =
-    let p, t = Domain.nextSwitch policy (utcOn 8 23 23 30)
+    let p, t = nextSwitchOrFail policy (utcOn 8 23 23 30)
     Assert.Equal(Peak, p)
-    Assert.Equal(DateTime(2026, 8, 24, 1, 0, 0), t)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 8, 24, 1, 0, 0, DateTimeKind.Utc)), t)
+
+[<Fact>]
+let ``periodOf v2 将 UTC 瞬间转换为北京时间窗口`` () =
+    Assert.Equal(Peak, Domain.periodOf policyChina (utcOn 9 30 1 0)) // 北京时间 09:00
+    Assert.Equal(OffPeak, Domain.periodOf policyChina (utcOn 9 30 4 0)) // 北京时间 12:00
+
+[<Fact>]
+let ``periodOf v2 按北京时间日期排除节假日`` () =
+    Assert.Equal(OffPeak, Domain.periodOf policyChina (utcOn 9 30 17 0)) // 北京时间 10 月 1 日 01:00 UTC
+
+[<Fact>]
+let ``periodOf v2 覆盖范围外返回未知`` () =
+    let afterCoverage =
+        DateTimeOffset(DateTime(2026, 12, 31, 16, 0, 0, DateTimeKind.Utc)) // 北京时间 2027-01-01
+
+    Assert.Equal(Unknown, Domain.periodOf policyChina afterCoverage)
+
+[<Fact>]
+let ``nextSwitch v2 跳过连续节假日`` () =
+    let p, t = nextSwitchOrFail policyChina (utcOn 10 1 1 0)
+    Assert.Equal(Peak, p)
+    Assert.Equal(DateTimeOffset(DateTime(2026, 10, 8, 1, 0, 0, DateTimeKind.Utc)), t)
+
+[<Fact>]
+let ``nextSwitch v2 不越过日历覆盖范围猜测`` () =
+    let lastCoveredDay =
+        DateTimeOffset(DateTime(2026, 12, 31, 10, 0, 0, DateTimeKind.Utc))
+
+    Assert.True(Domain.nextSwitch policyChina lastCoveredDay |> Option.isNone)
 
 // ------ formatCountdown ------
 
@@ -158,6 +211,12 @@ let ``statusLine 峰含表情与距谷`` () =
 [<Fact>]
 let ``statusLine 谷含表情与距峰`` () =
     Assert.Equal("😊 谷 · 距峰还有 45m", Domain.statusLine OffPeak (TimeSpan(0, 45, 0)))
+
+[<Fact>]
+let ``未知时段不展示价格`` () =
+    Assert.Equal("⚠️ 峰谷未知 · 假日日历待更新", Domain.statusLine Unknown (TimeSpan.Zero))
+    Assert.Equal("Flash 输入 价格未知", Domain.inputLine Unknown testModels.Head)
+    Assert.Equal("假日日历已超出覆盖范围，当前峰谷状态和价格未知", Domain.tooltipWithoutSwitch Unknown testModels)
 
 [<Fact>]
 let ``inputLine 峰时输入价格`` () =

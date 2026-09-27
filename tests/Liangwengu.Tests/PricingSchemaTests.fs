@@ -1,5 +1,6 @@
 module Liangwengu.Tests.PricingSchemaTests
 
+open System
 open Liangwengu
 open Xunit
 
@@ -25,6 +26,29 @@ let validV1 =
   ]
 }"""
 
+let validV2 =
+    """{
+  "schemaVersion": 2,
+  "sourceHash": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+  "currency": "CNY",
+  "peakPolicy": {
+    "timezone": "Asia/Shanghai",
+    "weekdaysOnly": true,
+    "windows": [
+      { "start": "09:00", "end": "12:00" },
+      { "start": "14:00", "end": "18:00" }
+    ],
+    "holidayCalendar": {
+      "coveredFrom": "2026-01-01",
+      "coveredThrough": "2026-12-31",
+      "excludedDates": ["2026-10-01", "2026-10-02"]
+    }
+  },
+  "models": [
+    { "modelId": "deepseek-flash", "displayName": "Flash", "peak": { "inputCacheHit": 0.04, "inputCacheMiss": 2, "output": 8 }, "offPeak": { "inputCacheHit": 0.02, "inputCacheMiss": 1, "output": 4 } }
+  ]
+}"""
+
 let okOrFail r msg =
     match r with
     | Ok v -> v
@@ -42,6 +66,8 @@ let ``parse 合法 v1 JSON 成功`` () =
     let s = okOrFail (PricingSchema.parse validV1) "expected Ok"
     Assert.Equal(1, s.SchemaVersion)
     Assert.Equal("CNY", s.Currency)
+    Assert.Equal("UTC", s.PeakPolicy.Timezone)
+    Assert.True(s.PeakPolicy.HolidayCalendar.IsNone)
     Assert.True(s.PeakPolicy.WeekdaysOnly)
     Assert.Equal(2, s.PeakPolicy.Windows.Length)
     Assert.Equal("01:00", s.PeakPolicy.Windows.[0].Start)
@@ -57,6 +83,46 @@ let ``parse 合法 v1 JSON 成功`` () =
 let ``parse 不支持的 schemaVersion 返回 Error`` () =
     let json = validV1.Replace("\"schemaVersion\": 1", "\"schemaVersion\": 99")
     assertError (PricingSchema.parse json)
+
+[<Fact>]
+let ``parse 合法 v2 JSON 成功并保留北京时间假日日历`` () =
+    let s = okOrFail (PricingSchema.parse validV2) "expected Ok"
+    Assert.Equal(2, s.SchemaVersion)
+    Assert.Equal("Asia/Shanghai", s.PeakPolicy.Timezone)
+    let calendar = s.PeakPolicy.HolidayCalendar.Value
+    Assert.Equal("2026-01-01", calendar.CoveredFrom)
+    Assert.Equal("2026-12-31", calendar.CoveredThrough)
+    Assert.Equal<string list>([ "2026-10-01"; "2026-10-02" ], calendar.ExcludedDates)
+
+[<Fact>]
+let ``parse 拒绝 v2 使用非北京时间`` () =
+    let json = validV2.Replace("Asia/Shanghai", "UTC")
+    assertError (PricingSchema.parse json)
+
+[<Theory>]
+[<InlineData("[\"2026-10-02\",\"2026-10-01\"]")>]
+[<InlineData("[\"2026-10-01\",\"2026-10-01\"]")>]
+[<InlineData("[\"2027-01-01\"]")>]
+let ``parse 拒绝无序重复或超出覆盖范围的假期`` dates =
+    let json = validV2.Replace("[\"2026-10-01\", \"2026-10-02\"]", dates)
+    assertError (PricingSchema.parse json)
+
+[<Fact>]
+let ``serialize v1 快照仍输出旧字段布局`` () =
+    let snap = okOrFail (PricingSchema.parse validV1) "expected Ok"
+    let serialized = PricingSchema.serialize snap
+    Assert.Contains("\"schemaVersion\":1", serialized)
+    Assert.DoesNotContain("timezone", serialized)
+    Assert.True(PricingSchema.tryParse serialized |> Option.isSome)
+
+[<Fact>]
+let ``serialize v2 快照往返保留 holidayCalendar`` () =
+    let snap = okOrFail (PricingSchema.parse validV2) "expected Ok"
+    let serialized = PricingSchema.serialize snap
+    Assert.Contains("\"timezone\":\"Asia/Shanghai\"", serialized)
+    Assert.Contains("\"holidayCalendar\"", serialized)
+    let reparsed = okOrFail (PricingSchema.parse serialized) "round trip expected Ok"
+    Assert.Equal(2, reparsed.SchemaVersion)
 
 [<Fact>]
 let ``parse 缺少 schemaVersion 返回 Error`` () =
@@ -125,6 +191,14 @@ let ``parseHHmm 解析小时分钟`` () =
     Assert.Equal(600, PricingSchema.parseHHmm "10:00")
     Assert.Equal(1439, PricingSchema.parseHHmm "23:59")
 
+[<Theory>]
+[<InlineData("24:00")>]
+[<InlineData("12:60")>]
+[<InlineData("1:00")>]
+let ``parseHHmm 拒绝越界或格式错误时间`` value =
+    Assert.ThrowsAny<Exception>(fun () -> PricingSchema.parseHHmm value |> ignore)
+    |> ignore
+
 [<Fact>]
 let ``parse 多模型快照`` () =
     let json =
@@ -145,3 +219,13 @@ let ``parse 多模型快照`` () =
     Assert.Equal("a", s.Models.[0].ModelId)
     Assert.Equal(1m, s.Models.[0].Peak.InputCacheHit)
     Assert.Equal(3m, s.Models.[0].Peak.Output)
+
+[<Fact>]
+let ``bundled pricing json 是可解析的 v2 快照`` () =
+    let snapshot = PricingFetcher.loadBundled ()
+    Assert.Equal(2, snapshot.SchemaVersion)
+    Assert.Equal("Asia/Shanghai", snapshot.PeakPolicy.Timezone)
+    let calendar = snapshot.PeakPolicy.HolidayCalendar.Value
+    Assert.Equal("2026-01-01", calendar.CoveredFrom)
+    Assert.Equal("2026-12-31", calendar.CoveredThrough)
+    Assert.Contains("2026-10-01", calendar.ExcludedDates)

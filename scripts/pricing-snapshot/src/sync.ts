@@ -2,74 +2,99 @@
 import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { PRICING_JSON, type PricingSnapshot, type LlmRawOutput, snapshotData } from "./common.js";
 import { fetchAndHash } from "./fetch-html.js";
+import { fetchHolidayCalendar } from "./fetch-holidays.js";
 import { parsePricingHtml } from "./parse-with-llm.js";
 import { validate } from "./validate.js";
 
 async function main() {
-  // 1. 抓 HTML + 算 hash
-  console.error("== fetch html ==");
-  const { hash: newHash, html } = await fetchAndHash();
-  console.error(`   hash = ${newHash}`);
+  console.log("== fetch holiday calendar ==");
+  const holidayCalendar = await fetchHolidayCalendar();
+  console.log(
+    `   ${holidayCalendar.excludedDates.length} off-days, covered ${holidayCalendar.coveredFrom} through ${holidayCalendar.coveredThrough}`,
+  );
 
-  // 2. 读旧文件对比 hash
+  console.log("== fetch pricing html ==");
+  const { hash: newHash, html } = await fetchAndHash();
+  console.log(`   hash = ${newHash}`);
+
   let oldSnap: PricingSnapshot | null = null;
   try {
     oldSnap = JSON.parse(readFileSync(PRICING_JSON, "utf8")) as PricingSnapshot;
   } catch {
-    console.error("   (no existing pricing.json)");
+    console.log("   (no existing pricing.json)");
   }
 
-  if (oldSnap && oldSnap.sourceHash === newHash) {
-    console.error("== sourceHash unchanged; skip ==");
-    output({ hashChanged: false, dataChanged: false, bumpNeeded: false, bumpReason: "" });
+  const calendarChanged =
+    !oldSnap ||
+    oldSnap.schemaVersion !== 2 ||
+    JSON.stringify(oldSnap.peakPolicy.holidayCalendar) !== JSON.stringify(holidayCalendar);
+  const hashChanged = !oldSnap || oldSnap.sourceHash !== newHash;
+
+  if (!hashChanged && !calendarChanged && oldSnap?.schemaVersion === 2) {
+    console.log("== pricing and holiday calendar unchanged; skip ==");
+    output({ hashChanged: false, calendarChanged: false, dataChanged: false, bumpNeeded: false, bumpReason: "" });
     return;
   }
 
-  // 3. LLM 解析
-  console.error("== parse with LLM ==");
-  const raw = await parsePricingHtml(html);
-  console.error(`   ${raw.models.length} models, bumpNeeded=${raw.schemaBumpNeeded}`);
+  let candidate: PricingSnapshot;
+  let bumpNeeded = false;
+  let bumpReason = "";
 
-  // 4. 校验
-  console.error("== validate ==");
-  const vr = validate(raw);
-  if (!vr.ok) {
-    vr.errors.forEach((e) => console.error(`   ${e}`));
-    console.error("   validate FAILED");
-    process.exit(1);
+  if (!hashChanged && oldSnap?.schemaVersion === 2) {
+    console.log("== update holiday calendar only ==");
+    candidate = {
+      ...oldSnap,
+      peakPolicy: { ...oldSnap.peakPolicy, holidayCalendar },
+    };
+  } else {
+    console.log("== parse pricing html with LLM ==");
+    const raw: LlmRawOutput = await parsePricingHtml(html);
+    console.log(`   ${Array.isArray(raw.models) ? raw.models.length : 0} models, bumpNeeded=${raw.schemaBumpNeeded === true}`);
+
+    if (raw.schemaBumpNeeded === true) {
+      bumpNeeded = true;
+      bumpReason = raw.schemaBumpReason ?? "The pricing page contains information the current schema cannot represent.";
+      console.log(`   schemaBumpNeeded: ${bumpReason}`);
+      output({ hashChanged, calendarChanged, dataChanged: false, bumpNeeded, bumpReason });
+      return;
+    }
+
+    console.log("== validate v2 snapshot ==");
+    const validation = validate(raw, holidayCalendar);
+    if (!validation.ok) {
+      validation.errors.forEach((error) => console.error(`   ${error}`));
+      throw new Error("pricing snapshot validation failed; existing pricing.json was not changed");
+    }
+
+    candidate = validation.snapshot!;
   }
-  if (vr.bumpNeeded) console.error(`   schemaBumpNeeded: ${vr.bumpReason}`);
 
-  // 5. 注入 hash，对比数据，写文件
-  const newSnap: PricingSnapshot = { ...vr.snapshot!, sourceHash: newHash };
-  const dataChanged = oldSnap ? snapshotData(oldSnap) !== snapshotData(newSnap) : true;
+  const newSnap: PricingSnapshot = { ...candidate, sourceHash: newHash };
+  const dataChanged = !oldSnap || oldSnap.schemaVersion !== 2 || snapshotData(oldSnap) !== snapshotData(newSnap);
   writeFileSync(PRICING_JSON, JSON.stringify(newSnap, null, 2) + "\n");
-  console.error(`   wrote ${PRICING_JSON} (dataChanged=${dataChanged})`);
+  console.log(`   wrote ${PRICING_JSON} (dataChanged=${dataChanged})`);
 
-  output({
-    hashChanged: true,
-    dataChanged,
-    bumpNeeded: vr.bumpNeeded,
-    bumpReason: vr.bumpReason,
-  });
+  output({ hashChanged, calendarChanged, dataChanged, bumpNeeded, bumpReason });
 }
 
 function output(r: {
   hashChanged: boolean;
+  calendarChanged: boolean;
   dataChanged: boolean;
   bumpNeeded: boolean;
   bumpReason: string;
 }) {
+  const safeBumpReason = r.bumpReason.replace(/[\r\n]+/g, " ").trim();
   console.log(JSON.stringify(r));
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(
       process.env.GITHUB_OUTPUT,
-      `hashChanged=${r.hashChanged}\ndataChanged=${r.dataChanged}\nbumpNeeded=${r.bumpNeeded}\nbumpReason=${r.bumpReason}\n`
+      `hashChanged=${r.hashChanged}\ncalendarChanged=${r.calendarChanged}\ndataChanged=${r.dataChanged}\nbumpNeeded=${r.bumpNeeded}\nbumpReason=${safeBumpReason}\n`,
     );
   }
 }
 
-main().catch((e) => {
-  console.error(e);
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
 });
