@@ -2,7 +2,7 @@
 
 本文件记录 liangwengu 的变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
-## v0.3.0 - Unreleased
+## v0.3.0 - 2026-09-27
 
 ### Added
 - 定价快照 v2：直接内嵌中国法定节假日休息日期和日历覆盖范围
