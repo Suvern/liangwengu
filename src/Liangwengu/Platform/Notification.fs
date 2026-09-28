@@ -6,6 +6,13 @@ open System.Threading.Tasks
 module Notification =
     type NotificationResult = Result<unit, string>
 
+    let requestPermission () : Task<NotificationResult> =
+#if MACOS
+        Liangwengu.Mac.Notify.requestPermission ()
+#else
+        Task.FromResult(Ok())
+#endif
+
     let show (title: string) (message: string) : Task<NotificationResult> =
 #if WIN32
         try

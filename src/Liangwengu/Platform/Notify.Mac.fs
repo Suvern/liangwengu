@@ -5,6 +5,26 @@ open System.Threading.Tasks
 open UserNotifications
 
 module Notify =
+    let requestPermission () =
+        let result =
+            TaskCompletionSource<Result<unit, string>>(TaskCreationOptions.RunContinuationsAsynchronously)
+
+        try
+            UNUserNotificationCenter.Current.RequestAuthorization(
+                UNAuthorizationOptions.Alert,
+                fun granted error ->
+                    result.TrySetResult(
+                        if granted then Ok()
+                        elif isNull error then Error "请在系统设置中允许梁文谷发送通知"
+                        else Error error.LocalizedDescription
+                    )
+                    |> ignore
+            )
+        with ex ->
+            result.TrySetResult(Error ex.Message) |> ignore
+
+        result.Task
+
     let show (title: string) (message: string) =
         try
             let center = UNUserNotificationCenter.Current

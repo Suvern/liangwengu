@@ -46,19 +46,24 @@ let main (args: string[]) =
             eventArgs.SetObserved())
 
         try
-            match Liangwengu.Platform.SingleInstance.tryAcquire () with
-            | None ->
-                Console.Error.WriteLine("Liangwengu is already running.")
-                0
-            | Some instanceLease ->
-                use _instanceLease = instanceLease
-
+            let runDesktop () =
                 AppBuilder
                     .Configure<App>()
                     .UsePlatformDetect()
                     .WithInterFont()
                     .LogToTrace()
                     .StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown)
+
+            if args |> Array.contains "--panel-preview" then
+                runDesktop ()
+            else
+                match Liangwengu.Platform.SingleInstance.tryAcquire () with
+                | None ->
+                    Console.Error.WriteLine("Liangwengu is already running.")
+                    0
+                | Some instanceLease ->
+                    use _instanceLease = instanceLease
+                    runDesktop ()
         with ex ->
             logException "Application startup failed" ex
             1

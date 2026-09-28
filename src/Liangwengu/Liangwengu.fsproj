@@ -33,6 +33,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-macos'">
+    <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
     <ApplicationId>com.liangwengu.app</ApplicationId>
     <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
     <UseAppHost>true</UseAppHost>
@@ -48,7 +49,11 @@
     <Compile Include="Domain\Domain.fs" />
     <!-- 基础设施 -->
     <Compile Include="Infrastructure\PricingFetcher.fs" />
+    <Compile Include="Infrastructure\UserSettings.fs" />
     <!-- 平台适配 -->
+    <Compile Include="Platform\TrayHost.fs" />
+    <Compile Include="Platform\TrayHost.Windows.fs" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'" />
+    <Compile Include="Platform\TrayHost.Mac.fs" Condition="'$(TargetFramework)' == 'net10.0-macos'" />
     <Compile Include="Platform\Native.fs" />
     <Compile Include="Platform\SingleInstance.fs" />
     <Compile Include="Platform\Autostart.fs" />
@@ -58,10 +63,14 @@
     <Compile Include="Platform\Notification.fs" />
     <!-- 应用服务 -->
     <Compile Include="Application\PricingRefreshState.fs" />
+    <Compile Include="Application\PeriodReminder.fs" />
+    <Compile Include="Application\ReminderSettings.fs" />
     <Compile Include="Application\PricingRefreshService.fs" />
     <!-- 托盘 UI -->
-    <Compile Include="Presentation\TrayMenu.fs" />
-    <Compile Include="Presentation\TrayView.fs" />
+    <Compile Include="Presentation\PanelState.fs" />
+    <Compile Include="Presentation\PanelPlacement.fs" />
+    <Compile Include="Presentation\PanelWindow.fs" />
+    <Compile Include="Presentation\PanelPreview.fs" />
     <Compile Include="Presentation\TrayApplication.fs" />
     <!-- UI 入口 -->
     <Compile Include="App.fs" />
@@ -74,7 +83,6 @@
     <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
-    <!-- M4 自定义面板(MVU)前基本不用，按既定决策保留引用 -->
     <PackageReference Include="Avalonia.FuncUI" Version="2.0.0" />
     <PackageReference Include="FSharp.SystemTextJson" Version="1.4.36" />
   </ItemGroup>

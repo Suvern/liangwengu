@@ -26,6 +26,9 @@
   <ItemGroup>
     <Compile Include="PricingSchemaTests.fs" />
     <Compile Include="DomainTests.fs" />
+    <Compile Include="PanelStateTests.fs" />
+    <Compile Include="PanelPlacementTests.fs" />
+    <Compile Include="PanelServiceTests.fs" />
     <Compile Include="PricingRefreshStateTests.fs" />
     <Compile Include="NotificationTests.fs" />
   </ItemGroup>

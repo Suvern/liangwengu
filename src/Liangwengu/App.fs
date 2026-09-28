@@ -19,5 +19,10 @@ type App() =
                 e.Cancel <- true
                 desktop.Shutdown())
 
-            Liangwengu.Presentation.TrayApplication.start this desktop
+            let args = Environment.GetCommandLineArgs()
+
+            if args |> Array.contains "--panel-preview" then
+                Liangwengu.Presentation.PanelPreview.start this desktop args
+            else
+                Liangwengu.Presentation.TrayApplication.start this desktop
         | _ -> ()
